@@ -1,6 +1,8 @@
 import json
 from functools import lru_cache
 import networkx as nx
+import requests
+
 
 class TemporalGraphClass:
     def __init__(self, files):
@@ -8,8 +10,7 @@ class TemporalGraphClass:
 
     @lru_cache(maxsize=10)
     def load_graph_at_timestamp(self, timestamp):
-        with open(self.files[timestamp], 'r') as f:
-            data = json.load(f)
+        data = requests.get(self.files[timestamp]).json()
         return self._json_to_graph(data)
 
     def _json_to_graph(self, data):
@@ -21,14 +22,12 @@ class TemporalGraphClass:
                 graph.add_node(node_id, **node_attributes)
 
         all_edge_types = data["relationship_types"]
-        for i in data["relationship_values"]:
-            if i[0] in all_edge_types:
+        for link_type,link_values in data["link_values"].items():
+            for edge_data in link_values :
                 attributes = {}
-                for j in range(len(i) - 2):
-                    key = all_edge_types[i[0]][j]
-                    attributes[key] = i[j]
-                graph.add_edge(i[-2], i[-1], **attributes)
-            else:
-                graph.add_edge(i[0], i[1])
+                for j in range(len(edge_data) - 2):
+                    key = all_edge_types[link_type][j]
+                    attributes[key] = edge_data[j]
+                graph.add_edge(edge_data[-2], edge_data[-1], **attributes)
 
         return graph

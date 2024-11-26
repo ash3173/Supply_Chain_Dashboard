@@ -6,7 +6,7 @@ def query_transportation_cost_for_supplier_and_warehouse(G, supplier_id, warehou
     if G.has_edge(supplier_id, warehouse_id):
         edge_data = G[supplier_id][warehouse_id]
         st.write(edge_data)
-        if edge_data.get("relationship_type") == "SupplierToWarehouse":
+        if edge_data.get("relationship_type") == "SUPPLIERSToWAREHOUSE":
             return edge_data.get("transportation_cost")
     return None
 
@@ -37,9 +37,9 @@ def main():
     all_suppliers = []
     all_warehouses = []
     for node_id, node_data in graph.nodes(data=True):
-        if node_data.get("node_type") == "Supplier":
+        if node_data.get("node_type") == "SUPPLIERS":
             all_suppliers.append(node_id)
-        elif node_data.get("node_type") == "Warehouse":
+        elif node_data.get("node_type") == "WAREHOUSE":
             all_warehouses.append(node_id)
 
     supplier_id = st.sidebar.selectbox("Select Supplier ID:", options=all_suppliers)

@@ -2,10 +2,8 @@ import streamlit as st
 import glob
 import re
 from TemporalGraphClass import TemporalGraphClass 
-
-# Utility function for natural sorting of files
-def natural_sort(files):
-    return sorted(files, key=lambda x: int(re.search(r'timestamp_(\d+)', x).group(1)))
+import requests
+from constants import getTimestamp, getdata
 
 # Streamlit app starts here
 def main():
@@ -18,12 +16,16 @@ def main():
     if not files:
         st.error("No JSON files found in the specified directory.")
         return
+    
+    data = requests.get(getTimestamp).json()
+    totalTimeStamps = len(data)
 
-    # Sort files naturally
-    sorted_files = natural_sort(files)
-
+    files = []
+    for i in range(1,totalTimeStamps+1) :
+        files.append(f"{getdata}/{i}")
+    
     # Initialize TemporalGraph
-    temporal_graph = TemporalGraphClass(sorted_files)   
+    temporal_graph = TemporalGraphClass(files)   
     if temporal_graph not in st.session_state:
         st.session_state.temporal_graph = temporal_graph 
 
