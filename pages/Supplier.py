@@ -4,15 +4,58 @@ import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
 import requests
+import networkx as nx
+
 
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     )
 
+# Define the function to query lead time
+def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_id):
+    if G.has_edge(supplier_id, warehouse_id):
+        edge_data = G[supplier_id][warehouse_id]
+        if edge_data.get("relationship_type") == "SUPPLIERSToWAREHOUSE":
+            lead_time = edge_data.get("lead_time")
+            return lead_time
+        else:
+            return None
+    else:
+        return None
+def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost):
+    """
+    Analyze supplier reliability and transportation costs at a specific timestamp in a temporal graph.
+
+    Parameters:
+        graph (Graph): The temporal graph object for the specified timestamp.
+        timestamp (int): The specific timestamp to analyze.
+        reliability_threshold (float): The minimum acceptable reliability threshold for suppliers.
+        max_transportation_cost (float): The maximum acceptable transportation cost.
+
+    Returns:
+        list: A list of suppliers meeting the criteria, including supplier ID, reliability, and transportation cost.
+    """
+    suppliers = []
+
+    # Iterate through edges and check if they belong to SUPPLIERSToWAREHOUSE relationship
+    for u, v, data in graph.edges(data=True):
+        # Check if the edge type matches SUPPLIERSToWAREHOUSE
+        if data.get("relationship_type") == "SUPPLIERSToWAREHOUSE":
+            transportation_cost = data.get("transportation_cost", 0)
+            
+            # Check if the transportation cost is within the acceptable range
+            if transportation_cost <= max_transportation_cost:
+                # Extract and check the reliability of the supplier node
+                reliability = graph.nodes[u].get("reliability", 0)
+                if reliability >= reliability_threshold:
+                    suppliers.append((u, reliability, transportation_cost))
+
+    return suppliers
+
 
 def get_visualization(data):
-    supplier_data = data["node_values"]["Supplier"]
+    supplier_data = data["node_values"]["SUPPLIERS"]
     place_freq = {}
     items_freq = {}
 
@@ -60,23 +103,19 @@ def get_visualization(data):
 
     # Update layout for better appearance
     fig1.update_layout(
-        title=dict(
+    template='plotly_dark',
+    plot_bgcolor='rgba(0,0,0,0)',
+    paper_bgcolor='rgba(0,0,0,0)',
+    title=dict(
         text='Concentration of Suppliers',
-        x=0.5,  # Center the title
-        xanchor='center',  # Align to center horizontally
-        yanchor='top'  # Align vertically at the top
-        ),
-    
-        template='plotly_dark',
-        geo=dict(
-            showlakes=True,  # Show lakes
-            lakecolor='rgb(255, 255, 255)'  # Lake color
-        ),
-        # Set transparent background
-        plot_bgcolor='rgba(0,0,0,0)',  # Transparent plot area
-        paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper area
-        font=dict(color="black"),        # Optional: Set font color
-        # height=350
+        x=0.5,
+        xanchor='center',
+        yanchor='top'
+    ),
+    geo=dict(
+        showlakes=True,
+        lakecolor='rgb(255, 255, 255)'
+    )
     )
 
     # Create the bar chart with blue color
@@ -149,34 +188,129 @@ def create_graph():
 
     return fig
 
+def plotly_ego_graph(ego_graph):
+    """
+    Visualizes the ego graph using Plotly, displaying node IDs as labels and attributes on hover.
+    """
+    pos = nx.spring_layout(ego_graph)
+    
+    # Edges
+    edge_x = []
+    edge_y = []
+    edge_hover_text = []
+
+    for edge in ego_graph.edges(data=True):
+        x0, y0 = pos[edge[0]]
+        x1, y1 = pos[edge[1]]
+        edge_x.append(x0)
+        edge_y.append(y0)
+        edge_x.append(x1)
+        edge_y.append(y1)
+        edge_x.append(None)  # To separate edges visually
+        edge_y.append(None)
+
+        # Format hover text for edges
+        attributes = edge[2]
+        hover_details = [f"{key}: {value}" for key, value in attributes.items()]
+        edge_hover_text.append("<br>".join(hover_details))
+
+    edge_trace = go.Scatter(
+        x=edge_x,
+        y=edge_y,
+        line=dict(width=0.5, color="gray"),
+        hoverinfo="text",
+        hovertext=edge_hover_text,  # Show edge attributes on hover
+        mode="lines"
+    )
+
+    # Nodes
+    node_x = []
+    node_y = []
+    node_ids = []
+    node_hover_text = []
+
+    for node in ego_graph.nodes(data=True):
+        x, y = pos[node[0]]
+        node_x.append(x)
+        node_y.append(y)
+        node_ids.append(str(node[0]))  # Use node ID as label
+
+        # Format hover text for nodes
+        attributes = node[1]
+        hover_details = [f"{key}: {value}" for key, value in attributes.items()]
+        node_hover_text.append("<br>".join(hover_details))
+
+    node_trace = go.Scatter(
+        x=node_x,
+        y=node_y,
+        mode="markers+text",  # Display labels with text
+        text=node_ids,  # Node IDs as labels
+        textposition="top center",
+        hoverinfo="text",
+        hovertext=node_hover_text,  # Show attributes on hover
+        marker=dict(
+            showscale=False,
+            colorscale="YlGnBu",
+            size=20,
+            color=[1] * len(node_x),
+        ),
+    )
+
+    layout = go.Layout(
+        title=dict(
+            text="Ego Graph Visualization",
+            x=0.0,
+            font=dict(size=18)
+        ),
+        showlegend=False,
+        hovermode="closest",
+        xaxis=dict(showgrid=False, zeroline=False, visible=False),
+        yaxis=dict(showgrid=False, zeroline=False, visible=False),
+        height=400,
+    )
+
+    fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
+    return fig
+
+
+
+
+
+def ego_graph_query(graph, node_id, radius):
+    """
+    Returns the ego graph for a specific node within a given radius.
+    """
+    ego_graph = nx.ego_graph(graph, node_id, radius=radius)
+    return ego_graph
+
 
 def main():
 
     st.markdown("""
     <style>
-    
-           /* Remove blank space at top and bottom */ 
-           .block-container {
-               padding-top: 0rem;
-               padding-bottom: 0rem;
-            }
-           
-           /* Remove blank space at the center canvas */ 
-           .st-emotion-cache-z5fcl4 {
-               position: relative;
-               top: -50px;
-               }
-           
-           /* Make the toolbar transparent and the content below it clickable */ 
-           .st-emotion-cache-18ni7ap {
-               pointer-events: none;
-               background: rgb(255 255 255 / 0%)
-               }
-           .st-emotion-cache-zq5wmm {
-               pointer-events: auto;
-               background: rgb(255 255 255);
-               border-radius: 5px;
-               }
+        /* Remove blank space at top and bottom */
+        .block-container {
+            padding-top: 1rem; /* Add some padding to avoid cutting off the title */
+            padding-bottom: 0rem;
+        }
+
+        /* Adjust canvas positioning */
+        .st-emotion-cache-z5fcl4 {
+            position: relative;
+            top: -30px; /* Adjusted to avoid cutting the title */
+        }
+
+        /* Toolbar transparency and content accessibility */
+        .st-emotion-cache-18ni7ap {
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0%); /* Use correct rgba syntax for transparency */
+        }
+        .st-emotion-cache-zq5wmm {
+            pointer-events: auto;
+            background: rgb(255, 255, 255);
+            border-radius: 5px;
+        }
+        
     </style>
     """, unsafe_allow_html=True)
     
@@ -186,7 +320,7 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
 
-    timestamp = 1
+    timestamp = 2
 
     # Load the JSON data at the given timestamp
     # with open(st.session_state.temporal_graph.files[timestamp], 'r') as f:
@@ -197,7 +331,7 @@ def main():
         return
     data = url_data.json()
 
-    col1, col2, col3 = st.columns([1,4,2], gap='medium')
+    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
 
     with col1:
         fig = create_graph()
@@ -210,35 +344,123 @@ def main():
     with col3:
         st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
 
+    st.divider()  
     col1, col2=st.columns(2)
 
 
     with col1:
-        st.write("Supplier ID Info")
-        
-        # Input field for Supplier ID
-        supplier_id = st.text_input("Enter Supplier ID:")
-
-        # Display the properties if the Supplier ID is valid
-        for val in supplier_data:
-            if supplier_id in val:
-                st.write("### Node Properties")
-                attributes = [
-                    "Node Type", "Name", "Location", "Reliability", "Size", "Size Category", 
-                    "Supplied Part Types", "ID"
-                ]
-                
-
-                # Display each attribute and its value
-                for attr, value in zip(attributes, val):
-                    st.write(f"**{attr}:** {value}")
-                break
-
+    
+        # Heading for the Supplier ID Info
+        st.write("### Supplier ID Info")
             
-    with col2:
-        st.write("Ego")
+        # Input field for Supplier ID
+        supplier_id = st.text_input("Enter Supplier ID (e.g., S_001):",placeholder="Search for Supplier ID...")
 
+        # Define the attributes of the supplier
+        attributes = [
+            ("Node Type", "🔗"),
+            ("Name", "📛"),
+            ("Location", "📍"),
+            ("Reliability", "📊"),
+            ("Size", "📐"),
+            ("Size Category", "📦"),
+            ("Supplied Part Types", "🛠️"),
+            ("ID", "🆔")
+        ]
+
+        found = False
+            # Loop through supplier data to find matching Supplier ID and display details
+        for val in supplier_data:
+            if supplier_id and supplier_id in val:
+                found = True
+                
+                # Display each attribute with its corresponding icon and value
+                st.markdown(
+                    """
+                    <style>
+                
+                    .attribute {
+                        margin-bottom: 12px;
+                        padding-left: 10px;
+                        font-size: 14px;
+                    }
+                    .attribute b {
+                        color: #0d47a1; /* Bold color for attribute labels */
+                    }
+                    </style>
+                    <div class="custom-container">
+                    """, unsafe_allow_html=True)
+                
+                # Display each attribute with its value
+                for attr, icon in attributes:
+                    if attr == "Supplied Part Types":
+                        # Convert the list of supplied parts to a comma-separated string
+                        part_types = ", ".join(val[6])
+                        st.markdown(f"<p class='attribute'><b>{icon} {attr}: </b>{part_types}</p>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<p class='attribute'><b>{icon} {attr}: </b>{val[attributes.index((attr, icon))]}</p>", unsafe_allow_html=True)
+                
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+        if not found: 
+            st.warning('Enter a valid supplier ID')
+            
+    
+    
+    with col2:
+        if found:
+            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
+            ego_graph = ego_graph_query(graph, supplier_id, 1)
+            if ego_graph:
+                st.write(f"### Neighbors for {supplier_id}")
+                # st.write(f"Ego Graph for Node: {supplier_id}")
+                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+                # Visualize and render the ego graph with Plotly
+                fig = plotly_ego_graph(ego_graph)
+                st.plotly_chart(fig)  # Display the figure in Streamlit
+
+
+    st.divider() 
+
+    col1, col2=st.columns([2,1])
+    with col1:
+        graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+        # Heading for the Supplier ID Info
+        st.write("### Queries based on Suppliers")
+
+        query_type = st.selectbox("Choose Query", ["Select","Supplier Reliability and Costing Analysis", "Given a Supplier ID and Warehouse ID get lead time."])
+
+        if query_type == "Supplier Reliability and Costing Analysis":
+            st.info("Suppliers with high reliability and low transportation cost")
+            reliability_threshold = st.slider("Reliability Threshold", min_value=0.0, max_value=1.0, value=0.95, step=0.01)
+            max_transportation_cost = st.number_input("Max Transportation Cost", min_value=0.0, value=50.0, step=0.1)
+            
+            results = supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost)
+            with st.container(height=300):
         
+                if results:
+                    st.write("### Suppliers meeting the criteria:")
+                    for supplier in results:
+                        st.write(f"Supplier ID: {supplier[0]}, Reliability: {supplier[1]:.2f}, Transportation Cost: {supplier[2]:.2f}")
+                else:
+                    st.write("No suppliers meet the specified criteria.")
+
+        elif query_type=="Given a Supplier ID and Warehouse ID get lead time.":
+            supplier_id = st.text_input("Enter Supplier ID", "S_003")
+            warehouse_id = st.text_input("Enter Warehouse ID", "W_143")
+
+            lead_time = query_lead_time_supplier_to_warehouse(graph, timestamp, supplier_id, warehouse_id)
+
+            if lead_time is not None:
+                st.success(f"Lead time between Supplier {supplier_id} and Warehouse {warehouse_id}: {lead_time}")
+            else:
+                st.error(f"No relationship or lead time data found between Supplier {supplier_id} and Warehouse {warehouse_id}.")
+
+    st.text(" ")  # Adds one blank line
+    st.text(" ")  # Adds another blank line
+
+    st.divider()  # Adds a horizontal divider (thin line), visually separating sections
 
 if __name__ == "__main__":
     main()
