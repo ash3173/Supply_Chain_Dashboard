@@ -29,6 +29,7 @@ def main():
     if temporal_graph not in st.session_state:
         st.session_state.temporal_graph = temporal_graph 
 
+    st.write(st.session_state.temporal_graph.files[2])
     # Success message
     st.success("Files processed successfully!")
 

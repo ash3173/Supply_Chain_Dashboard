@@ -3,6 +3,7 @@ import json
 import plotly.express as px
 import pandas as pd
 import plotly.graph_objects as go
+import requests
 
 st.set_page_config(
     layout="wide",
@@ -185,11 +186,16 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
 
-    timestamp = 2
+    timestamp = 1
 
     # Load the JSON data at the given timestamp
-    with open(st.session_state.temporal_graph.files[timestamp], 'r') as f:
-        data = json.load(f)
+    # with open(st.session_state.temporal_graph.files[timestamp], 'r') as f:
+    #     data = json.load(f)
+    url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
+    if url_data.status_code != 200:
+        st.error("Failed to load data from the server.")
+        return
+    data = url_data.json()
 
     col1, col2, col3 = st.columns([1,4,2], gap='medium')
 
