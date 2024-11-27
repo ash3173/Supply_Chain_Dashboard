@@ -12,70 +12,158 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 
-def plot_revenue(data):
-    """
-    Plot revenue data for multiple business units over time as subplots in a single Plotly figure.
+def create_graph():
+    # Define node attributes
+    nodes = {
+        "BUSINESS_GROUP": ["node_type", "name", "description", "revenue", "id"],
+        "PRODUCT_FAMILY": ["node_type", "name", "revenue", "id"],
+        "PRODUCT_OFFERING": ["node_type", "name", "cost", "demand", "id"]
+    }
 
-    Args:
-    data (dict): A dictionary where keys are business unit names and values are lists of revenue over time.
+    # Define edge attributes
+    edges = {
+        "BUSINESS_GROUPToPRODUCT_FAMILY": ["relationship_type", "source", "target"],
+        "PRODUCT_FAMILYToPRODUCT_OFFERING": ["relationship_type", "source", "target"]
+    }
 
-    Returns:
-    fig: A Plotly figure with subplots.
-    """
-    # Number of business units
+    # Create a new figure
+    fig = go.Figure()
+
+    # Add edge: BUSINESS_GROUP to PRODUCT_FAMILY
+    fig.add_trace(go.Scatter(
+        x=[0, 0.5], y=[0, -0.3], mode='lines', line=dict(width=2, color='white'),
+        hoverinfo='text',
+        text=['<b>BUSINESS_GROUPToPRODUCT_FAMILY</b><br>' + '<br>'.join(edges["BUSINESS_GROUPToPRODUCT_FAMILY"])]
+    ))
+
+    # Add edge: PRODUCT_FAMILY to PRODUCT_OFFERING
+    fig.add_trace(go.Scatter(
+        x=[0.5, 1], y=[-0.3, -0.6], mode='lines', line=dict(width=2, color='white'),
+        hoverinfo='text',
+        text=['<b>PRODUCT_FAMILYToPRODUCT_OFFERING</b><br>' + '<br>'.join(edges["PRODUCT_FAMILYToPRODUCT_OFFERING"])]
+    ))
+
+    # Add BUSINESS_GROUP node
+    fig.add_trace(go.Scatter(
+        x=[0], y=[0], mode='markers+text', marker=dict(size=15, color='cyan'),
+        text=['BUSINESS_GROUP'], textposition='top center', hoverinfo='text',
+        hovertext='<b>BUSINESS_GROUP</b><br>' + '<br>'.join(nodes["BUSINESS_GROUP"])
+    ))
+
+    # Add PRODUCT_FAMILY node
+    fig.add_trace(go.Scatter(
+        x=[0.5], y=[-0.3], mode='markers+text', marker=dict(size=15, color='orange'),
+        text=['PRODUCT_FAMILY'], textposition='top center', hoverinfo='text',
+        hovertext='<b>PRODUCT_FAMILY</b><br>' + '<br>'.join(nodes["PRODUCT_FAMILY"])
+    ))
+
+    # Add PRODUCT_OFFERING node
+    fig.add_trace(go.Scatter(
+        x=[1], y=[-0.6], mode='markers+text', marker=dict(size=15, color='green'),
+        text=['PRODUCT_OFFERING'], textposition='top center', hoverinfo='text',
+        hovertext='<b>PRODUCT_OFFERING</b><br>' + '<br>'.join(nodes["PRODUCT_OFFERING"])
+    ))
+
+    # Update layout for visibility
+    fig.update_layout(
+        title=dict(
+            text="Business Group Schema",
+            x=0, xanchor='left', yanchor='top'
+        ),
+        height=400,
+        margin=dict(l=10, r=10, t=30, b=10),
+        xaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False,
+            range=[-0.2, 1.2]  # Adjust x-axis range for padding
+        ),
+        yaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False,
+            range=[-0.8, 0.2]  # Adjust y-axis range for padding
+        ),
+        showlegend=False,
+        font=dict(color="white", size=10),
+        hoverlabel=dict(bgcolor="black", font_color="white"),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+    )
+
+    return fig
+
+
+def plot_revenues(data):
+    
+    # Colors for the plots (cyclic if there are more units than colors)
+    colors = [
+        '#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#FFC107', '#00BCD4', '#795548', '#607D8B'
+    ]
+
     num_business_units = len(data)
 
-    # Create subplots layout
-    fig = make_subplots(
-        rows=1,  # Single row
-        cols=num_business_units,  # One column per business unit
+    # Create subplot layout
+    fig2 = make_subplots(
+        rows=1,
+        cols=num_business_units,
         subplot_titles=list(data.keys())  # Titles for each subplot
     )
 
-    # Colors for the plots
-    colors = [
-        "rgba(33,150,243,1)",  # Blue
-        "rgba(76,175,80,1)",   # Green
-        "rgba(255,152,0,1)",   # Orange
-        "rgba(156,39,176,1)",  # Purple
-        "rgba(255,193,7,1)",   # Yellow
-        "rgba(0,188,212,1)",   # Cyan
-        "rgba(121,85,72,1)",   # Brown
-        "rgba(96,125,139,1)"   # Grey
-    ]
+    # Create a combined figure (fig1)
+    fig1 = go.Figure()
 
-    # Add traces for each business unit
+    # Generate plots for each business unit
     for i, (business_unit, revenues) in enumerate(data.items()):
-        fig.add_trace(
+        # Set fillcolor in rgba format (adjust transparency to 0.2)
+        fillcolor = f"rgba({int(colors[i % len(colors)][1:3], 16)}, {int(colors[i % len(colors)][3:5], 16)}, {int(colors[i % len(colors)][5:7], 16)}, 0.2)"
+
+        # Add to Subplot (fig2)
+        fig2.add_trace(
             go.Scatter(
                 x=list(range(len(revenues))),
                 y=revenues,
                 mode='lines',
-                fill='tozeroy',  # Adds shading under the line
+                fill='tozeroy',
                 name=business_unit,
                 line=dict(color=colors[i % len(colors)], width=2),
-                fillcolor=colors[i % len(colors)].replace(",1)", ",0.2)")  # Adjust alpha for transparency
+                fillcolor=fillcolor
             ),
-            row=1,  # Single row
-            col=i + 1  # Column index
+            row=1,
+            col=i + 1
         )
 
-    # Customize the layout
-    fig.update_layout(
+        # Add to Combined Figure (fig1)
+        fig1.add_trace(go.Scatter(
+            x=list(range(len(revenues))),
+            y=revenues,
+            mode='lines',
+            fill='tozeroy',
+            name=business_unit,
+            line=dict(color=colors[i % len(colors)], width=2),
+            fillcolor=fillcolor
+        ))
+
+    # Customize the layout for fig2 (subplots)
+    fig2.update_layout(
         title='Revenue Generated by Product Family Over Time',
-        title_x=0,  # Center the title
-        height=300,  # Set custom height
-        width=500 * num_business_units,  # Dynamically adjust width based on the number of subplots
-        template='plotly_dark',  # Dark mode theme
-        showlegend=False,  # Hide legend (each subplot has its title)
-        margin=dict(t=50, b=30, l=30, r=30)  # Adjust margins
+        title_x=0,
+        height=250,  # Fixed height
+        width=500 * num_business_units,  # Adjust width dynamically
+        template='plotly_dark',
+        showlegend=False,
+        margin=dict(t=50, b=30, l=30, r=30)
+    )
+    fig2.update_annotations(font_size=12)
+
+    # Customize the layout for combined_fig (fig1)
+    fig1.update_layout(
+        title="Combined Revenue Figures",
+        title_x=0,
+        xaxis_title="Time",
+        yaxis_title="Revenue",
+        template='plotly_dark',
+        hovermode='x unified',
+        margin=dict(l=50, r=50, t=50, b=50)
     )
 
-    # Update subplot titles font size
-    fig.update_annotations(font_size=12)
-
-    return fig
-
+    return fig1, fig2
 
 def plotly_ego_graph(ego_graph):
     """
@@ -276,9 +364,14 @@ def main():
         fig = plot_higest_revenue(revenue, identifier, i+1)
         with cols[i]:
             st.pyplot(fig)
-
-    fig = plot_revenue(revenue_of_product_offering_across_time)
-    st.plotly_chart(fig, use_container_width=True)
+    cols=st.columns([1,3])
+    with cols[0]:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+    with cols[1]:
+        fig1,fig2 = plot_revenues(revenue_of_product_offering_across_time)
+        st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True)
 
     st.divider()  
     col1, col2=st.columns(2)
