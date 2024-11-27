@@ -13,6 +13,58 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 
+
+def create_graph():
+    # Define node attributes for Business Group and Product Family
+    nodes = {
+        'Business Group': ['node_type', 'name', 'description', 'revenue', 'id'],
+        'Product Family': ['node_type', 'name', 'revenue', 'id']
+    }
+    edge = ['relationship_type', 'connection_type', 'source', 'target']  # Attributes for the edge between Business Group and Product Family
+
+    # Create a new figure
+    fig = go.Figure()
+
+    # Add edge (Business Group to Product Family) - vertically aligned
+    fig.add_trace(go.Scatter(
+        x=[0, 1], y=[0, -1], mode='lines', line=dict(width=2, color='white'),
+        hoverinfo='text',
+        text=['<b>Edge Attributes</b><br>' + '<br>'.join(edge)]  # Edge hover text formatted line-by-line
+    ))
+
+    # Add Business Group node (positioned at y=0)
+    fig.add_trace(go.Scatter(
+        x=[0], y=[0], mode='markers+text', marker=dict(size=20, color='cyan'),
+        text=['Business Group'], textposition='top center', hoverinfo='text',
+        hovertext='<b>Business Group</b><br>' + '<br>'.join(nodes['Business Group'])  # Show only attribute names
+    ))
+
+    # Add Product Family node (positioned at y=-1)
+    fig.add_trace(go.Scatter(
+        x=[1], y=[-1], mode='markers+text', marker=dict(size=20, color='orange'),
+        text=['Product Family'], textposition='top center', hoverinfo='text',
+        hovertext='<b>Product Family</b><br>' + '<br>'.join(nodes['Product Family'])  # Show only attribute names
+    ))
+
+    # Update layout for dark mode, transparent background, and properly formatted hover text
+    fig.update_layout(
+        title=dict(
+            text="Business Group and Product Family Schema",  # Title text
+            x=0.5,  # Center the title
+            xanchor='center',  # Horizontal alignment
+            yanchor='top'  # Vertical alignment
+        ),
+        showlegend=False,
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        font=dict(color="white"),  # White text color
+        hoverlabel=dict(bgcolor="black", font_color="white"),  # Hover label styling
+        plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
+        paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper background
+    )
+
+    return fig
+
 def plot_revenue(data):
     num_business_units = len(data)
 
@@ -243,6 +295,7 @@ def main():
     
     # Display the top 3 business groups in columns
     cols = st.columns(len(highest_business_group))
+    
     for i in range(len(highest_business_group)):
         revenue, identifier, month_index = heapq.heappop(highest_business_group)
         fig2 = plot_higest_revenue(-revenue, identifier, month_index)
