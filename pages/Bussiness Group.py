@@ -20,7 +20,7 @@ def create_graph():
         'Business Group': ['node_type', 'name', 'description', 'revenue', 'id'],
         'Product Family': ['node_type', 'name', 'revenue', 'id']
     }
-    edge = ['relationship_type', 'connection_type', 'source', 'target']  # Attributes for the edge
+    edge = ['relationship_type','source', 'target']  # Attributes for the edge
 
     # Create a new figure
     fig = go.Figure()
