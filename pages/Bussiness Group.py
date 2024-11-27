@@ -20,50 +20,59 @@ def create_graph():
         'Business Group': ['node_type', 'name', 'description', 'revenue', 'id'],
         'Product Family': ['node_type', 'name', 'revenue', 'id']
     }
-    edge = ['relationship_type', 'connection_type', 'source', 'target']  # Attributes for the edge between Business Group and Product Family
+    edge = ['relationship_type', 'connection_type', 'source', 'target']  # Attributes for the edge
 
     # Create a new figure
     fig = go.Figure()
 
-    # Add edge (Business Group to Product Family) - vertically aligned
+    # Add edge (Business Group to Product Family) - closer positioning
     fig.add_trace(go.Scatter(
-        x=[0, 1], y=[0, -1], mode='lines', line=dict(width=2, color='white'),
+        x=[0, 0.6], y=[0, -0.3], mode='lines', line=dict(width=2, color='white'),
         hoverinfo='text',
-        text=['<b>Edge Attributes</b><br>' + '<br>'.join(edge)]  # Edge hover text formatted line-by-line
+        text=['<b>Edge Attributes</b><br>' + '<br>'.join(edge)]  # Edge hover text
     ))
 
     # Add Business Group node (positioned at y=0)
     fig.add_trace(go.Scatter(
-        x=[0], y=[0], mode='markers+text', marker=dict(size=20, color='cyan'),
+        x=[0], y=[0], mode='markers+text', marker=dict(size=15, color='cyan'),
         text=['Business Group'], textposition='top center', hoverinfo='text',
-        hovertext='<b>Business Group</b><br>' + '<br>'.join(nodes['Business Group'])  # Show only attribute names
+        hovertext='<b>Business Group</b><br>' + '<br>'.join(nodes['Business Group'])  # Attributes for hover
     ))
 
-    # Add Product Family node (positioned at y=-1)
+    # Add Product Family node (positioned at y=-0.3)
     fig.add_trace(go.Scatter(
-        x=[1], y=[-1], mode='markers+text', marker=dict(size=20, color='orange'),
+        x=[0.6], y=[-0.3], mode='markers+text', marker=dict(size=15, color='orange'),
         text=['Product Family'], textposition='top center', hoverinfo='text',
-        hovertext='<b>Product Family</b><br>' + '<br>'.join(nodes['Product Family'])  # Show only attribute names
+        hovertext='<b>Product Family</b><br>' + '<br>'.join(nodes['Product Family'])  # Attributes for hover
     ))
 
-    # Update layout for dark mode, transparent background, and properly formatted hover text
+    # Update layout for visibility
     fig.update_layout(
         title=dict(
-            text="Business Group and Product Family Schema",  # Title text
+            text="Business Group Schema",  # Title text
             x=0.5,  # Center the title
             xanchor='center',  # Horizontal alignment
             yanchor='top'  # Vertical alignment
         ),
+        height=250,  # Reduce the height of the graph
+        margin=dict(l=10, r=10, t=30, b=10),  # Tighten the margins
+        xaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False,
+            range=[-0.2, 0.8]  # Adjust x-axis range for padding
+        ),
+        yaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False,
+            range=[-0.4, 0.2]  # Adjust y-axis range for padding
+        ),
         showlegend=False,
-        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-        font=dict(color="white"),  # White text color
+        font=dict(color="white", size=10),  # Reduce font size for text
         hoverlabel=dict(bgcolor="black", font_color="white"),  # Hover label styling
         plot_bgcolor='rgba(0,0,0,0)',  # Transparent background
         paper_bgcolor='rgba(0,0,0,0)',  # Transparent paper background
     )
 
     return fig
+
 
 def plot_revenue(data):
     num_business_units = len(data)
@@ -294,14 +303,18 @@ def main():
             revenue_of_business_group_across_time[i].append(business_nodes[i][-2])
     
     # Display the top 3 business groups in columns
-    cols = st.columns(len(highest_business_group))
+    cols = st.columns(len(highest_business_group)+1)
+    with cols[0]:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
     
     for i in range(len(highest_business_group)):
         revenue, identifier, month_index = heapq.heappop(highest_business_group)
         fig2 = plot_higest_revenue(-revenue, identifier, month_index)
-        with cols[i]:
+        with cols[i+1]:
             st.pyplot(fig2)
     
+    st.divider() 
     fig1 = plot_revenue(revenue_of_business_group_across_time)
     st.plotly_chart(fig1, use_container_width=True)
 
