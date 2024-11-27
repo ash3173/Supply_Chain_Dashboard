@@ -10,12 +10,12 @@ def main():
     st.title("Temporal Graph Dashboard")
 
     # Specify the directory containing JSON files
-    data_directory = "data/supply_chain_export_100/"
-    files = glob.glob(f"{data_directory}timestamp_*.json")
+    # data_directory = "data/supply_chain_export_100/"
+    # files = glob.glob(f"{data_directory}timestamp_*.json")
 
-    if not files:
-        st.error("No JSON files found in the specified directory.")
-        return
+    # if not files:
+    #     st.error("No JSON files found in the specified directory.")
+    #     return
     
     data = requests.get(getTimestamp).json()
     totalTimeStamps = len(data)
