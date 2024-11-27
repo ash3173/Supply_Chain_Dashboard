@@ -22,7 +22,7 @@ PART_TYPES = {
 BUSINESS_GROUP_FEATURES = ['id', 'name', 'description', 'revenue']
 PRODUCT_FAMILY_FEATURES = ['id', 'name', 'revenue']
 FACILITY_FEATURES = ['id', 'name', 'type', 'location', 'max_capacity', 'operating_cost']
-WAREHOUSE_FEATURES = ['id', 'name', 'type', 'location', 'max_capacity', 'current_capacity', 'safety_stock']
+WAREHOUSE_FEATURES = ['id', 'name', 'type', 'location', 'max_capacity', 'current_capacity', 'safety_stock','max_parts']
 SUPPLIER_FEATURES = ['id', 'name', 'location', 'reliability', 'size', 'supplied_part_types']
 PART_FEATURES = ['id', 'name', 'type', 'subtype', 'cost', 'importance_factor', 'valid_from', 'valid_till']
 
