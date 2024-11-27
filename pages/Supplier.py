@@ -352,9 +352,9 @@ def main():
     
         # Heading for the Supplier ID Info
         st.write("### Supplier ID Info")
-            
+
         # Input field for Supplier ID
-        supplier_id = st.text_input("Enter Supplier ID (e.g., S_001):",placeholder="Search for Supplier ID...")
+        supplier_id = st.text_input("Enter Supplier ID (e.g., S_001):", placeholder="Search for Supplier ID...")
 
         # Define the attributes of the supplier
         attributes = [
@@ -368,41 +368,61 @@ def main():
             ("ID", "🆔")
         ]
 
+        # Style for the no-border table
+        st.markdown("""
+            <style>
+                .supplier-table {
+                    width: 100%;
+                    margin-top: 20px;
+                    border-collapse: collapse;
+                    font-size: 16px;
+                    font-family: Arial, sans-serif;
+                }
+                .supplier-table td {
+                    padding: 8px 12px;
+                }
+                .supplier-table td:first-child {
+                    font-weight: bold;
+                    color: #0d47a1; /* Blue color for attribute labels */
+                    width: 40%;
+                    text-align: left;
+                }
+                .supplier-table td:last-child {
+                    color: #2596be; /* Gray color for attribute values */
+                    width: 60%;
+                    text-align: left;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
         found = False
-            # Loop through supplier data to find matching Supplier ID and display details
+
+        # Loop through supplier data to find matching Supplier ID and display details
         for val in supplier_data:
             if supplier_id and supplier_id in val:
                 found = True
-                
-                # Display each attribute with its corresponding icon and value
-                st.markdown(
-                    """
-                    <style>
-                
-                    .attribute {
-                        margin-bottom: 12px;
-                        padding-left: 10px;
-                        font-size: 14px;
-                    }
-                    .attribute b {
-                        color: #0d47a1; /* Bold color for attribute labels */
-                    }
-                    </style>
-                    <div class="custom-container">
-                    """, unsafe_allow_html=True)
-                
-                # Display each attribute with its value
+
+                # Create a no-border table for displaying attributes and values
+                table_rows = ""
                 for attr, icon in attributes:
                     if attr == "Supplied Part Types":
                         # Convert the list of supplied parts to a comma-separated string
                         part_types = ", ".join(val[6])
-                        st.markdown(f"<p class='attribute'><b>{icon} {attr}: </b>{part_types}</p>", unsafe_allow_html=True)
+                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{part_types}</td></tr>"
                     else:
-                        st.markdown(f"<p class='attribute'><b>{icon} {attr}: </b>{val[attributes.index((attr, icon))]}</p>", unsafe_allow_html=True)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
-                
-        if not found: 
+                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
+
+                # Display the table
+                st.markdown(
+                    f"""
+                    <table class="supplier-table">
+                        {table_rows}
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        if not found:
             st.warning('Enter a valid supplier ID')
             
     

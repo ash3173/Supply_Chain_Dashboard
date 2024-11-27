@@ -3,18 +3,13 @@ import requests
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     )
-
-import plotly.graph_objects as go
-import streamlit as st
-
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
-import streamlit as st
 
 def plot_revenue(data):
     """
@@ -190,6 +185,15 @@ def main():
 
     fig = plot_revenue(revenue_of_product_offering_across_time)
     st.plotly_chart(fig, use_container_width=True)
+
+    st.divider()  
+    col1, col2=st.columns(2)
+
+    with col1:
+    
+        # Heading for the Supplier ID Info
+        st.write("### Supplier ID Info")
+
     
 if __name__ == "__main__":
     main()
