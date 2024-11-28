@@ -5,14 +5,41 @@ import pandas as pd
 import plotly.graph_objects as go
 import requests
 import networkx as nx
+import time
+import tracemalloc
+import functools
 
+def time_and_memory_streamlit(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Start tracking memory and time
+        tracemalloc.start()
+        start_time = time.time()
 
+        try:
+            # Call the actual function
+            result = func(*args, **kwargs)
+        finally:
+            # Calculate memory and time usage
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+
+            # Display results in Streamlit
+            st.write(f"**Function Name:** `{func.__name__}`")
+            st.write(f"**Time Taken:** `{elapsed_time:.2f} seconds`")
+            st.write(f"**Memory Usage:** `{current / 1024:.2f} KiB` (Current), `{peak / 1024:.2f} KiB` (Peak)")
+
+        return result
+    return wrapper
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     )
 
 # Define the function to query lead time
+@time_and_memory_streamlit
 def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_id):
     if G.has_edge(supplier_id, warehouse_id):
         edge_data = G[supplier_id][warehouse_id]
@@ -23,6 +50,8 @@ def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_i
             return None
     else:
         return None
+
+@time_and_memory_streamlit
 def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost):
     """
     Analyze supplier reliability and transportation costs at a specific timestamp in a temporal graph.
@@ -53,6 +82,136 @@ def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshol
 
     return suppliers
 
+@st.experimental_fragment
+@time_and_memory_streamlit
+def node_details(supplier_data,supplier_id):
+    col1, col2=st.columns(2)
+
+
+    with col1:
+        st.write("### Supplier ID Info")
+    
+                # Define the attributes of the supplier
+        attributes = [
+            ("Node Type", "🔗"),
+            ("Name", "📛"),
+            ("Location", "📍"),
+            ("Reliability", "📊"),
+            ("Size", "📐"),
+            ("Size Category", "📦"),
+            ("Supplied Part Types", "🛠️"),
+            ("ID", "🆔")
+        ]
+
+        # Style for the no-border table
+        st.markdown("""
+            <style>
+                .supplier-table {
+                    width: 100%;
+                    margin-top: 20px;
+                    border-collapse: collapse;
+                    font-size: 16px;
+                    font-family: Arial, sans-serif;
+                }
+                .supplier-table td {
+                    padding: 8px 12px;
+                }
+                .supplier-table td:first-child {
+                    font-weight: bold;
+                    color: #0d47a1; /* Blue color for attribute labels */
+                    width: 40%;
+                    text-align: left;
+                }
+                .supplier-table td:last-child {
+                    color: #2596be; /* Gray color for attribute values */
+                    width: 60%;
+                    text-align: left;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        found = False
+
+        # Loop through supplier data to find matching Supplier ID and display details
+        for val in supplier_data:
+            if supplier_id and supplier_id in val:
+                found = True
+
+                # Create a no-border table for displaying attributes and values
+                table_rows = ""
+                for attr, icon in attributes:
+                    if attr == "Supplied Part Types":
+                        # Convert the list of supplied parts to a comma-separated string
+                        part_types = ", ".join(val[6])
+                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{part_types}</td></tr>"
+                    else:
+                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
+
+                # Display the table
+                st.markdown(
+                    f"""
+                    <table class="supplier-table">
+                        {table_rows}
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        if not found:
+            st.warning('Enter a valid supplier ID')
+            
+    
+    
+    with col2:
+        if found:
+            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
+            ego_graph = ego_graph_query(graph, supplier_id, 1)
+            if ego_graph:
+                st.write(f"### Neighbors for {supplier_id}")
+                # st.write(f"Ego Graph for Node: {supplier_id}")
+                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+                # Visualize and render the ego graph with Plotly
+                fig = plotly_ego_graph(ego_graph)
+                st.plotly_chart(fig)  # Display the figure in Streamlit
+
+@st.experimental_fragment
+def queries():
+    col1, col2=st.columns([2,1])
+    with col1:
+        timestamp=1
+        graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+        # Heading for the Supplier ID Info
+        st.write("### Queries based on Suppliers")
+
+        query_type = st.selectbox("Choose Query", ["Select","Supplier Reliability and Costing Analysis", "Given a Supplier ID and Warehouse ID get lead time."])
+
+        if query_type == "Supplier Reliability and Costing Analysis":
+            st.info("Suppliers with high reliability and low transportation cost")
+            reliability_threshold = st.slider("Reliability Threshold", min_value=0.0, max_value=1.0, value=0.95, step=0.01)
+            max_transportation_cost = st.number_input("Max Transportation Cost", min_value=0.0, value=50.0, step=0.1)
+            
+            results = supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost)
+            
+            with st.container(height=300):
+        
+                if results:
+                    st.write("### Suppliers meeting the criteria:")
+                    for supplier in results:
+                        st.write(f"Supplier ID: {supplier[0]}, Reliability: {supplier[1]:.2f}, Transportation Cost: {supplier[2]:.2f}")
+                else:
+                    st.write("No suppliers meet the specified criteria.")
+
+        elif query_type=="Given a Supplier ID and Warehouse ID get lead time.":
+            supplier_id = st.text_input("Enter Supplier ID", "S_003")
+            warehouse_id = st.text_input("Enter Warehouse ID", "W_143")
+
+            lead_time = query_lead_time_supplier_to_warehouse(graph, timestamp, supplier_id, warehouse_id)
+
+            if lead_time is not None:
+                st.success(f"Lead time between Supplier {supplier_id} and Warehouse {warehouse_id}: {lead_time}")
+            else:
+                st.error(f"No relationship or lead time data found between Supplier {supplier_id} and Warehouse {warehouse_id}.")
 
 def get_visualization(data):
     supplier_data = data["node_values"]["SUPPLIERS"]
@@ -344,139 +503,24 @@ def main():
     with col3:
         st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
 
-    st.divider()  
-    col1, col2=st.columns(2)
-
-
-    with col1:
+    st.divider() 
+    # Heading for the Supplier ID Info
     
-        # Heading for the Supplier ID Info
-        st.write("### Supplier ID Info")
 
         # Input field for Supplier ID
-        supplier_id = st.text_input("Enter Supplier ID (e.g., S_001):", placeholder="Search for Supplier ID...")
-
-        # Define the attributes of the supplier
-        attributes = [
-            ("Node Type", "🔗"),
-            ("Name", "📛"),
-            ("Location", "📍"),
-            ("Reliability", "📊"),
-            ("Size", "📐"),
-            ("Size Category", "📦"),
-            ("Supplied Part Types", "🛠️"),
-            ("ID", "🆔")
-        ]
-
-        # Style for the no-border table
-        st.markdown("""
-            <style>
-                .supplier-table {
-                    width: 100%;
-                    margin-top: 20px;
-                    border-collapse: collapse;
-                    font-size: 16px;
-                    font-family: Arial, sans-serif;
-                }
-                .supplier-table td {
-                    padding: 8px 12px;
-                }
-                .supplier-table td:first-child {
-                    font-weight: bold;
-                    color: #0d47a1; /* Blue color for attribute labels */
-                    width: 40%;
-                    text-align: left;
-                }
-                .supplier-table td:last-child {
-                    color: #2596be; /* Gray color for attribute values */
-                    width: 60%;
-                    text-align: left;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        found = False
-
-        # Loop through supplier data to find matching Supplier ID and display details
-        for val in supplier_data:
-            if supplier_id and supplier_id in val:
-                found = True
-
-                # Create a no-border table for displaying attributes and values
-                table_rows = ""
-                for attr, icon in attributes:
-                    if attr == "Supplied Part Types":
-                        # Convert the list of supplied parts to a comma-separated string
-                        part_types = ", ".join(val[6])
-                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{part_types}</td></tr>"
-                    else:
-                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-                # Display the table
-                st.markdown(
-                    f"""
-                    <table class="supplier-table">
-                        {table_rows}
-                    </table>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-        if not found:
-            st.warning('Enter a valid supplier ID')
-            
-    
-    
-    with col2:
-        if found:
-            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-            ego_graph = ego_graph_query(graph, supplier_id, 1)
-            if ego_graph:
-                st.write(f"### Neighbors for {supplier_id}")
-                # st.write(f"Ego Graph for Node: {supplier_id}")
-                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-                # Visualize and render the ego graph with Plotly
-                fig = plotly_ego_graph(ego_graph)
-                st.plotly_chart(fig)  # Display the figure in Streamlit
-
-
-    st.divider() 
-
-    col1, col2=st.columns([2,1])
+    col1,col2=st.columns([2,1])
     with col1:
-        graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-        # Heading for the Supplier ID Info
-        st.write("### Queries based on Suppliers")
-
-        query_type = st.selectbox("Choose Query", ["Select","Supplier Reliability and Costing Analysis", "Given a Supplier ID and Warehouse ID get lead time."])
-
-        if query_type == "Supplier Reliability and Costing Analysis":
-            st.info("Suppliers with high reliability and low transportation cost")
-            reliability_threshold = st.slider("Reliability Threshold", min_value=0.0, max_value=1.0, value=0.95, step=0.01)
-            max_transportation_cost = st.number_input("Max Transportation Cost", min_value=0.0, value=50.0, step=0.1)
-            
-            results = supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost)
-            with st.container(height=300):
-        
-                if results:
-                    st.write("### Suppliers meeting the criteria:")
-                    for supplier in results:
-                        st.write(f"Supplier ID: {supplier[0]}, Reliability: {supplier[1]:.2f}, Transportation Cost: {supplier[2]:.2f}")
-                else:
-                    st.write("No suppliers meet the specified criteria.")
-
-        elif query_type=="Given a Supplier ID and Warehouse ID get lead time.":
-            supplier_id = st.text_input("Enter Supplier ID", "S_003")
-            warehouse_id = st.text_input("Enter Warehouse ID", "W_143")
-
-            lead_time = query_lead_time_supplier_to_warehouse(graph, timestamp, supplier_id, warehouse_id)
-
-            if lead_time is not None:
-                st.success(f"Lead time between Supplier {supplier_id} and Warehouse {warehouse_id}: {lead_time}")
-            else:
-                st.error(f"No relationship or lead time data found between Supplier {supplier_id} and Warehouse {warehouse_id}.")
-
+        st.write("### Supplier Details Viewer")
+        all_supplier = ["Select Suppliers"]
+        for supp in supplier_data:
+            all_supplier.append(supp[-1])
+        supplier_id_input = st.selectbox("Choose Supplier Id",all_supplier)
+    
+    if supplier_id_input!="Select Suppliers":
+        node_details(supplier_data, supplier_id_input)
+    
+    st.divider() 
+    queries()
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line
 

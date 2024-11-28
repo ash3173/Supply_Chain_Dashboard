@@ -249,8 +249,90 @@ def plotly_ego_graph(ego_graph):
     fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
     return fig
 
+@st.experimental_fragment
+def node_details(PRODUCT_FAMILY):
+    col1, col2=st.columns(2)
 
+    with col1:
+        # Heading for the Product Family Info
+        st.write("### Product Family Info")
 
+        # Input field for Product Family ID
+        product_family_id = st.text_input("Enter Product Family ID (e.g., PF_001):", placeholder="Search for Product Family ID...")
+
+        # Define the attributes of the product family
+        attributes = [
+            ("Node Type", "🔗"),
+            ("Name", "📛"),
+            ("Revenue", "💰"),
+            ("ID", "🆔")
+        ]
+
+        # Style for the no-border table
+        st.markdown("""
+            <style>
+                .product-family-table {
+                    width: 100%;
+                    margin-top: 20px;
+                    border-collapse: collapse;
+                    font-size: 16px;
+                    font-family: Arial, sans-serif;
+                }
+                .product-family-table td {
+                    padding: 8px 12px;
+                }
+                .product-family-table td:first-child {
+                    font-weight: bold;
+                    color: #0d47a1; /* Blue color for attribute labels */
+                    width: 40%;
+                    text-align: left;
+                }
+                .product-family-table td:last-child {
+                    color: #2596be; /* Gray color for attribute values */
+                    width: 60%;
+                    text-align: left;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        found = False
+
+        # Loop through product family data to find matching Product Family ID and display details
+        for val in PRODUCT_FAMILY:  # Replace with your actual product family data source
+            if product_family_id and product_family_id in val:
+                found = True
+
+                # Create a no-border table for displaying attributes and values
+                table_rows = ""
+                for attr, icon in attributes:
+                    # Extract values dynamically based on attributes
+                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
+
+                # Display the table
+                st.markdown(
+                    f"""
+                    <table class="product-family-table">
+                        {table_rows}
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        if not found:
+            st.warning('Enter a valid Product Family ID')
+
+    with col2:
+        if found:
+            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
+            ego_graph = ego_graph_query(graph, product_family_id, 1)
+            if ego_graph:
+                st.write(f"### Neighbors for {product_family_id}")
+                # st.write(f"Ego Graph for Node: {supplier_id}")
+                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+                # Visualize and render the ego graph with Plotly
+                fig = plotly_ego_graph(ego_graph)
+                st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
 def ego_graph_query(graph, node_id, radius):
@@ -374,88 +456,7 @@ def main():
     st.plotly_chart(fig2, use_container_width=True)
 
     st.divider()  
-    col1, col2=st.columns(2)
-
-    with col1:
-        # Heading for the Product Family Info
-        st.write("### Product Family Info")
-
-        # Input field for Product Family ID
-        product_family_id = st.text_input("Enter Product Family ID (e.g., PF_001):", placeholder="Search for Product Family ID...")
-
-        # Define the attributes of the product family
-        attributes = [
-            ("Node Type", "🔗"),
-            ("Name", "📛"),
-            ("Revenue", "💰"),
-            ("ID", "🆔")
-        ]
-
-        # Style for the no-border table
-        st.markdown("""
-            <style>
-                .product-family-table {
-                    width: 100%;
-                    margin-top: 20px;
-                    border-collapse: collapse;
-                    font-size: 16px;
-                    font-family: Arial, sans-serif;
-                }
-                .product-family-table td {
-                    padding: 8px 12px;
-                }
-                .product-family-table td:first-child {
-                    font-weight: bold;
-                    color: #0d47a1; /* Blue color for attribute labels */
-                    width: 40%;
-                    text-align: left;
-                }
-                .product-family-table td:last-child {
-                    color: #2596be; /* Gray color for attribute values */
-                    width: 60%;
-                    text-align: left;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        found = False
-
-        # Loop through product family data to find matching Product Family ID and display details
-        for val in PRODUCT_FAMILY:  # Replace with your actual product family data source
-            if product_family_id and product_family_id in val:
-                found = True
-
-                # Create a no-border table for displaying attributes and values
-                table_rows = ""
-                for attr, icon in attributes:
-                    # Extract values dynamically based on attributes
-                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-                # Display the table
-                st.markdown(
-                    f"""
-                    <table class="product-family-table">
-                        {table_rows}
-                    </table>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-        if not found:
-            st.warning('Enter a valid Product Family ID')
-
-    with col2:
-        if found:
-            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-            ego_graph = ego_graph_query(graph, product_family_id, 1)
-            if ego_graph:
-                st.write(f"### Neighbors for {product_family_id}")
-                # st.write(f"Ego Graph for Node: {supplier_id}")
-                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-                # Visualize and render the ego graph with Plotly
-                fig = plotly_ego_graph(ego_graph)
-                st.plotly_chart(fig)  # Display the figure in Streamlit
+    node_details(PRODUCT_FAMILY)
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line
 

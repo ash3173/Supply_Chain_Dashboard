@@ -7,13 +7,126 @@ from matplotlib.patches import Circle
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import networkx as nx
+import time
+import tracemalloc
+import functools
 
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     )
 
+def time_and_memory_streamlit(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Start tracking memory and time
+        tracemalloc.start()
+        start_time = time.time()
 
+        try:
+            # Call the actual function
+            result = func(*args, **kwargs)
+        finally:
+            # Calculate memory and time usage
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+
+            # Display results in Streamlit
+            st.write(f"**Function Name:** `{func.__name__}`")
+            st.write(f"**Time Taken:** `{elapsed_time:.2f} seconds`")
+            st.write(f"**Memory Usage:** `{current / 1024:.2f} KiB` (Current), `{peak / 1024:.2f} KiB` (Peak)")
+
+        return result
+    return wrapper
+
+@time_and_memory_streamlit
+@st.experimental_fragment
+def node_details(business_nodes):
+    col1, col2=st.columns(2)
+    with col1:
+        # Heading for the Business Group Info
+        st.write("### Business Group Info")
+        all_business_groups = ["Select Business Group"]
+        for business_group in business_nodes:
+            all_business_groups.append(business_group[-1])
+
+
+        business_group_id = st.selectbox("Choose Business Id",all_business_groups)
+        # Define the attributes of the business group
+        attributes = [
+            ("Node Type", "🔗"),
+            ("Name", "📛"),
+            ("Description", "📝"),
+            ("Revenue", "💰"),
+            ("ID", "🆔")
+        ]
+
+        # Style for the no-border table
+        st.markdown("""
+            <style>
+                .business-group-table {
+                    width: 100%;
+                    margin-top: 20px;
+                    border-collapse: collapse;
+                    font-size: 16px;
+                    font-family: Arial, sans-serif;
+                }
+                .business-group-table td {
+                    padding: 8px 12px;
+                }
+                .business-group-table td:first-child {
+                    font-weight: bold;
+                    color: #0d47a1; /* Blue color for attribute labels */
+                    width: 40%;
+                    text-align: left;
+                }
+                .business-group-table td:last-child {
+                    color: #2596be; /* Gray color for attribute values */
+                    width: 60%;
+                    text-align: left;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+
+        found = False
+
+        # Loop through business group data to find matching Business Group ID and display details
+        for val in business_nodes:  # Replace with your actual business group data source
+            if business_group_id and business_group_id in val:
+                found = True
+
+                # Create a no-border table for displaying attributes and values
+                table_rows = ""
+                for attr, icon in attributes:
+                    # Extract values dynamically based on attributes
+                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
+
+                # Display the table
+                st.markdown(
+                    f"""
+                    <table class="business-group-table">
+                        {table_rows}
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        if not found:
+            st.warning('Enter a valid Business Group ID')
+    with col2:
+        if found:
+            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
+            ego_graph = ego_graph_query(graph, business_group_id, 1)
+            if ego_graph:
+                st.write(f"### Neighbors for {business_group_id}")
+                # st.write(f"Ego Graph for Node: {supplier_id}")
+                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+                # Visualize and render the ego graph with Plotly
+                fig = plotly_ego_graph(ego_graph)
+                st.plotly_chart(fig)  # Display the figure in Streamlit
 def create_graph():
     # Define node attributes for Business Group and Product Family
     nodes = {
@@ -206,7 +319,18 @@ def plotly_ego_graph(ego_graph):
     return fig
 
 
+@st.experimental_fragment
+def ego(business_group_id):
+    graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
+    ego_graph = ego_graph_query(graph, business_group_id, 1)
+    if ego_graph:
+        st.write(f"### Neighbors for {business_group_id}")
+        # st.write(f"Ego Graph for Node: {supplier_id}")
+        # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
 
+        # Visualize and render the ego graph with Plotly
+        fig = plotly_ego_graph(ego_graph)
+        st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
 def ego_graph_query(graph, node_id, radius):
@@ -320,89 +444,9 @@ def main():
 
 
     st.divider()  
-    col1, col2=st.columns(2)
-    with col1:
-        # Heading for the Business Group Info
-        st.write("### Business Group Info")
-        all_business_groups = ["Select Business Group"]
-        for business_group in business_nodes:
-            all_business_groups.append(business_group[-1])
-
-
-        business_group_id = st.selectbox("Choose Business Id",all_business_groups)
-        # Define the attributes of the business group
-        attributes = [
-            ("Node Type", "🔗"),
-            ("Name", "📛"),
-            ("Description", "📝"),
-            ("Revenue", "💰"),
-            ("ID", "🆔")
-        ]
-
-        # Style for the no-border table
-        st.markdown("""
-            <style>
-                .business-group-table {
-                    width: 100%;
-                    margin-top: 20px;
-                    border-collapse: collapse;
-                    font-size: 16px;
-                    font-family: Arial, sans-serif;
-                }
-                .business-group-table td {
-                    padding: 8px 12px;
-                }
-                .business-group-table td:first-child {
-                    font-weight: bold;
-                    color: #0d47a1; /* Blue color for attribute labels */
-                    width: 40%;
-                    text-align: left;
-                }
-                .business-group-table td:last-child {
-                    color: #2596be; /* Gray color for attribute values */
-                    width: 60%;
-                    text-align: left;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-
-        found = False
-
-        # Loop through business group data to find matching Business Group ID and display details
-        for val in business_nodes:  # Replace with your actual business group data source
-            if business_group_id and business_group_id in val:
-                found = True
-
-                # Create a no-border table for displaying attributes and values
-                table_rows = ""
-                for attr, icon in attributes:
-                    # Extract values dynamically based on attributes
-                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-                # Display the table
-                st.markdown(
-                    f"""
-                    <table class="business-group-table">
-                        {table_rows}
-                    </table>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-        if not found:
-            st.warning('Enter a valid Business Group ID')
-    with col2:
-        if found:
-            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-            ego_graph = ego_graph_query(graph, business_group_id, 1)
-            if ego_graph:
-                st.write(f"### Neighbors for {business_group_id}")
-                # st.write(f"Ego Graph for Node: {supplier_id}")
-                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-                # Visualize and render the ego graph with Plotly
-                fig = plotly_ego_graph(ego_graph)
-                st.plotly_chart(fig)  # Display the figure in Streamlit
+    
+    node_details(business_nodes)
+            
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line
 
