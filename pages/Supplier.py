@@ -432,9 +432,6 @@ def plotly_ego_graph(ego_graph):
     return fig
 
 
-
-
-
 def ego_graph_query(graph, node_id, radius):
     """
     Returns the ego graph for a specific node within a given radius.
