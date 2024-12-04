@@ -476,7 +476,7 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
 
-    timestamp = 2
+    timestamp = 0
 
     # Load the JSON data at the given timestamp
     # with open(st.session_state.temporal_graph.files[timestamp], 'r') as f:

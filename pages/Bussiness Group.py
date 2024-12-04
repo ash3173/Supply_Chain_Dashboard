@@ -23,7 +23,7 @@ def time_and_memory_streamlit(func):
         tracemalloc.start()
         start_time = time.time()
 
-        try:
+        try:            
             # Call the actual function
             result = func(*args, **kwargs)
         finally:
