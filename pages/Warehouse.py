@@ -384,5 +384,13 @@ def main():
     # else :
     #     st.write("Transportation cost:",transportation_cost)    
     
+
+
+
+#     9. Temporal Clustering of Nodes/Edges
+# Query: "Group nodes or edges into clusters based on attribute similarity over timestamps."
+
+# Purpose: Find clusters of nodes or edges (e.g., Warehouses with similar current_capacity trends) over time.
+# Example Output: Temporal cluster maps.
 if __name__ == "__main__":
     main()
