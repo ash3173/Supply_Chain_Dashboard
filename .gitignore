@@ -2,3 +2,4 @@ __pycache__
 streamlitenv
 data
 env
+.env
