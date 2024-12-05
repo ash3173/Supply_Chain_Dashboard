@@ -82,7 +82,7 @@ def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshol
 
     return suppliers
 
-@st.experimental_fragment
+@st.fragment
 @time_and_memory_streamlit
 def node_details(supplier_data,supplier_id):
     col1, col2=st.columns(2)
@@ -175,7 +175,7 @@ def node_details(supplier_data,supplier_id):
                 fig = plotly_ego_graph(ego_graph)
                 st.plotly_chart(fig)  # Display the figure in Streamlit
 
-@st.experimental_fragment
+@st.fragment
 def queries():
     col1, col2=st.columns([2,1])
     with col1:

@@ -42,7 +42,7 @@ def time_and_memory_streamlit(func):
     return wrapper
 
 @time_and_memory_streamlit
-@st.experimental_fragment
+@st.fragment
 def node_details(business_nodes):
     col1, col2=st.columns(2)
     with col1:
@@ -319,7 +319,7 @@ def plotly_ego_graph(ego_graph):
     return fig
 
 
-@st.experimental_fragment
+@st.fragment
 def ego(business_group_id):
     graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
     ego_graph = ego_graph_query(graph, business_group_id, 1)

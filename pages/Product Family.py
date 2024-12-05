@@ -249,7 +249,7 @@ def plotly_ego_graph(ego_graph):
     fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
     return fig
 
-@st.experimental_fragment
+@st.fragment
 def node_details(PRODUCT_FAMILY):
     col1, col2=st.columns(2)
 

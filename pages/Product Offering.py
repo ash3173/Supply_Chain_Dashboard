@@ -120,7 +120,7 @@ def node_details(product_data, product_id):
                 # Visualize and render the ego graph with Plotly
                 fig = plotly_ego_graph(ego_graph)
                 st.plotly_chart(fig)  # Display the figure in Streamlit
-@st.experimental_fragment
+@st.fragment
 def pre_detail(po_data):
     
     col1,col2=st.columns([2,1])

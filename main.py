@@ -7,15 +7,15 @@ import os
 import glob
 
 load_dotenv()
-
-getdata = os.getenv("GET_DATA")
-getTimestamp = os.getenv("GET_TIMESTAMP")
+base_url = os.getenv("base_url")
+version = os.getenv("version")
+getdata = f"{base_url}/archive/schema/{version}"
+getTimestamp = f"{base_url}/archive/schema/{version}"
 
 # Streamlit app starts here
 # main for running from server
 def main():
     st.title("Temporal Graph Dashboard")
-    
     data = requests.get(getTimestamp).json()
     totalTimeStamps = len(data)
 
