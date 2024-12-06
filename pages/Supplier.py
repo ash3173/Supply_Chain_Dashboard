@@ -82,6 +82,18 @@ def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshol
 
     return suppliers
 
+def node_details_input(supplier_data):
+    col1,col2=st.columns([2,1])
+    with col1:
+        st.write("### Supplier Details Viewer")
+        all_supplier = ["Select Suppliers"]
+        for supp in supplier_data:
+            all_supplier.append(supp[-1])
+        supplier_id_input = st.selectbox("Choose Supplier Id",all_supplier)
+    
+    if supplier_id_input!="Select Suppliers":
+        node_details(supplier_data, supplier_id_input)
+
 @st.fragment
 @time_and_memory_streamlit
 def node_details(supplier_data,supplier_id):
@@ -501,20 +513,9 @@ def main():
         st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
 
     st.divider() 
-    # Heading for the Supplier ID Info
     
-
-        # Input field for Supplier ID
-    col1,col2=st.columns([2,1])
-    with col1:
-        st.write("### Supplier Details Viewer")
-        all_supplier = ["Select Suppliers"]
-        for supp in supplier_data:
-            all_supplier.append(supp[-1])
-        supplier_id_input = st.selectbox("Choose Supplier Id",all_supplier)
+    node_details_input(supplier_data)
     
-    if supplier_id_input!="Select Suppliers":
-        node_details(supplier_data, supplier_id_input)
     
     st.divider() 
     queries()
