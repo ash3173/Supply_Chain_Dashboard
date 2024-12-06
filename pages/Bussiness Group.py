@@ -41,10 +41,9 @@ def time_and_memory_streamlit(func):
         return result
     return wrapper
 
-@time_and_memory_streamlit
 @st.fragment
-def node_details(business_nodes):
-    col1, col2=st.columns(2)
+def node_details_input(business_nodes):
+    col1,col2=st.columns([2,1])
     with col1:
         # Heading for the Business Group Info
         st.write("### Business Group Info")
@@ -54,7 +53,18 @@ def node_details(business_nodes):
 
 
         business_group_id = st.selectbox("Choose Business Id",all_business_groups)
-        # Define the attributes of the business group
+    
+    if business_group_id!="Select Business Group":
+        node_details(business_nodes, business_group_id)
+
+@st.fragment
+@time_and_memory_streamlit
+def node_details(business_nodes,business_group_id):
+    col1, col2=st.columns(2)
+    with col1:
+        # Heading for the Business Group Info
+        st.write("### Business Group Info")
+    
         attributes = [
             ("Node Type", "🔗"),
             ("Name", "📛"),
@@ -445,8 +455,9 @@ def main():
 
     st.divider()  
     
-    node_details(business_nodes)
-            
+    node_details_input(business_nodes)
+
+
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line
 

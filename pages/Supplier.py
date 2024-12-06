@@ -89,7 +89,7 @@ def node_details(supplier_data,supplier_id):
 
 
     with col1:
-        st.write("### Supplier ID Info")
+        st.write("### Supplier Info")
     
                 # Define the attributes of the supplier
         attributes = [
