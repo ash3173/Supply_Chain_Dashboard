@@ -222,11 +222,11 @@ def create_facility_map(facility_nodes):
             showactive=True,
             bgcolor="rgba(88, 84, 86, 0.8)",  # Button background color
             font=dict(
-                color="rgba(14,17,23,255)",  # Text color
-                size=14,  # Font size
-                family="Arial",  # Font family
-                
-            ),
+                    color="rgba(14,17,23,255)",  # Text color
+                    size=17,  # Font size
+                    family="Arial, sans-serif",  # Font family
+                    weight="bold"  # Bold title
+                )
         )
     ],
     geo=dict(
