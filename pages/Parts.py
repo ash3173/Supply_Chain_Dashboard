@@ -594,6 +594,92 @@ def get_part_ids(timestamp):
         if data.get("node_type") == "PARTS"
     ]
 
+@st.fragment
+def queries():
+    col1, col2=st.columns([2,1])
+    with col1:
+        timestamp=1
+        st.write("### Queries based on Parts")
+        query_option = st.selectbox("Choose Query", ["Select","Valid Parts Query", "Most Common Subtypes Query", 
+                                                            "Bottleneck Parts Analysis", "Suppliers for Part", 
+                                                            "Parts with Larger Distances and Lower Costs"])
+
+        # Perform the query based on selected option
+        if query_option == "Valid Parts Query":
+            # Date input for the query
+            start_date = st.date_input("Start Date", value=datetime(2024, 1, 1))
+            end_date = st.date_input("End Date", value=datetime(2026, 12, 31))
+
+            # Convert to string format
+            start_date_str = start_date.strftime("%Y-%m-%d")
+            end_date_str = end_date.strftime("%Y-%m-%d")
+
+            if st.button("Run Valid Parts Query"):
+                # with st.container(height=500):
+                #     valid_parts = 
+                query_valid_parts_nx(timestamp, start_date_str, end_date_str)
+                    # if valid_parts:
+                    #     st.write("Found valid parts:")
+                    #     for part in valid_parts:
+                    #         st.write(f"The Part ID {part['part_id']} is Valid Till: {part['valid_till']}")
+                    # else:
+                    #     st.write("No valid parts found for the given date range.")
+
+        elif query_option == "Most Common Subtypes Query":
+            n = st.number_input("Number of most common subtypes", min_value=1, max_value=10, value=5)
+
+            if st.button("Run Most Common Subtypes Query"):
+                # common_subtypes = query_most_common_subtypes_nx(timestamp, n)
+                # with st.container():
+                result_table = query_most_common_subtypes_nx(timestamp, n)
+                if result_table.empty:
+                    st.write(f"No subtypes found at timestamp {timestamp}.")
+                else:
+                    st.write(f"The {n} most common subtypes at timestamp {timestamp} are:")
+                    st.table(result_table)
+
+        elif query_option == "Bottleneck Parts Analysis":
+            importance_threshold = st.slider("Importance Threshold", min_value=0.0, max_value=1.0, value=0.5)
+            expected_life_threshold = st.slider("Expected Life Threshold (days)", min_value=0, max_value=1000, value=500)
+
+            if st.button("Run Bottleneck Parts Query"):
+            # Run the query and display results in a container
+            # with st.container():
+                bottleneck_table = bottleneck_parts_temporal(timestamp, importance_threshold, expected_life_threshold)
+                if bottleneck_table.empty:
+                    st.write("No bottleneck parts found for the given criteria.")
+                else:
+                    st.write(f"Bottleneck Parts at Timestamp {timestamp}:")
+                    st.table(bottleneck_table)  # Display the DataFrame as a table
+
+
+        elif query_option == "Suppliers for Part":
+            part_ids = get_part_ids(timestamp)
+            if part_ids:
+                part_ids = st.selectbox(
+                    "Select PART ID",
+                    options=part_ids,
+                    format_func=lambda x: f"{x}",
+                )
+            else:
+                st.warning("No PART IDs available for the selected timestamp.")
+                return
+            if st.button("Run Suppliers Query"):
+                suppliers = query_suppliers_for_part_via_warehouse(timestamp, part_ids)
+                st.write(f"Suppliers for part {part_ids}:", suppliers)
+
+        elif query_option == "Parts with Larger Distances and Lower Costs":
+            min_distance = st.number_input("Minimum Distance", value=100.0, step=10.0)
+            max_transport_cost = st.number_input("Maximum Transport Cost", value=50.0, step=5.0)
+
+            if st.button("Run Query"):
+                results_df = parts_with_larger_distances_and_lower_costs(timestamp, min_distance, max_transport_cost)
+
+                if not results_df.empty:
+                    st.write("Parts with larger distances and lower transport costs:")
+                    st.table(results_df)
+                else:
+                    st.write("No parts found matching the criteria.")
 def main():
 
     st.markdown("""
@@ -674,86 +760,14 @@ def main():
     node_details_input(parts_nodes)
 
     st.divider() 
-    query_option = st.selectbox("Select a Query Option", ["Valid Parts Query", "Most Common Subtypes Query", 
-                                                        "Bottleneck Parts Analysis", "Suppliers for Part", 
-                                                        "Parts with Larger Distances and Lower Costs"])
 
-    # Perform the query based on selected option
-    if query_option == "Valid Parts Query":
-        # Date input for the query
-        start_date = st.date_input("Start Date", value=datetime(2024, 1, 1))
-        end_date = st.date_input("End Date", value=datetime(2026, 12, 31))
+    queries()
 
-        # Convert to string format
-        start_date_str = start_date.strftime("%Y-%m-%d")
-        end_date_str = end_date.strftime("%Y-%m-%d")
+    st.text(" ")  # Adds one blank line
+    st.text(" ")  # Adds another blank line
 
-        if st.button("Run Valid Parts Query"):
-            # with st.container(height=500):
-            #     valid_parts = 
-            query_valid_parts_nx(timestamp, start_date_str, end_date_str)
-                # if valid_parts:
-                #     st.write("Found valid parts:")
-                #     for part in valid_parts:
-                #         st.write(f"The Part ID {part['part_id']} is Valid Till: {part['valid_till']}")
-                # else:
-                #     st.write("No valid parts found for the given date range.")
-
-    elif query_option == "Most Common Subtypes Query":
-        n = st.number_input("Number of most common subtypes", min_value=1, max_value=10, value=5)
-
-        if st.button("Run Most Common Subtypes Query"):
-            # common_subtypes = query_most_common_subtypes_nx(timestamp, n)
-            # with st.container():
-            result_table = query_most_common_subtypes_nx(timestamp, n)
-            if result_table.empty:
-                st.write(f"No subtypes found at timestamp {timestamp}.")
-            else:
-                st.write(f"The {n} most common subtypes at timestamp {timestamp} are:")
-                st.table(result_table)
-
-    elif query_option == "Bottleneck Parts Analysis":
-        importance_threshold = st.slider("Importance Threshold", min_value=0.0, max_value=1.0, value=0.5)
-        expected_life_threshold = st.slider("Expected Life Threshold (days)", min_value=0, max_value=1000, value=500)
-
-        if st.button("Run Bottleneck Parts Query"):
-        # Run the query and display results in a container
-        # with st.container():
-            bottleneck_table = bottleneck_parts_temporal(timestamp, importance_threshold, expected_life_threshold)
-            if bottleneck_table.empty:
-                st.write("No bottleneck parts found for the given criteria.")
-            else:
-                st.write(f"Bottleneck Parts at Timestamp {timestamp}:")
-                st.table(bottleneck_table)  # Display the DataFrame as a table
-
-
-    elif query_option == "Suppliers for Part":
-        part_ids = get_part_ids(timestamp)
-        if part_ids:
-            part_ids = st.selectbox(
-                "Select PART ID",
-                options=part_ids,
-                format_func=lambda x: f"{x}",
-            )
-        else:
-            st.warning("No PART IDs available for the selected timestamp.")
-            return
-        if st.button("Run Suppliers Query"):
-            suppliers = query_suppliers_for_part_via_warehouse(timestamp, part_ids)
-            st.write(f"Suppliers for part {part_ids}:", suppliers)
-
-    elif query_option == "Parts with Larger Distances and Lower Costs":
-        min_distance = st.number_input("Minimum Distance", value=100.0, step=10.0)
-        max_transport_cost = st.number_input("Maximum Transport Cost", value=50.0, step=5.0)
-
-        if st.button("Run Query"):
-            results_df = parts_with_larger_distances_and_lower_costs(timestamp, min_distance, max_transport_cost)
-
-            if not results_df.empty:
-                st.write("Parts with larger distances and lower transport costs:")
-                st.table(results_df)
-            else:
-                st.write("No parts found matching the criteria.")
+    st.divider() 
+ 
 
 
 if __name__ == "__main__":
