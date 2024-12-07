@@ -312,7 +312,7 @@ def create_graph():
     # Update layout for visibility
     fig.update_layout(
         title=dict(
-            text="Business Group Schema",
+            text="Product Offering Schema",
             x=0, xanchor='left', yanchor='top'
         ),
         height=400,

@@ -6,49 +6,187 @@ import requests
 import plotly.graph_objects as go
 import pandas as pd
 import altair as alt
+import networkx as nx
+import time
+import tracemalloc
+import functools
+import pandas as pd
+import plotly.express as px
 
-def create_bar_chart(data, title,x_title,y_title):
-    # Extract labels (product IDs) and values
-    labels = list(data.keys())
-    values = list(data.values())
-
-    # Create the bar chart
-    fig = go.Figure(
-        data=[go.Bar(
-            x=labels,          # Product IDs on the x-axis
-            y=values,          # Values on the y-axis
-            marker=dict(
-                color='rgb(34, 94, 154)',  # Custom color
-                line=dict(color='rgb(8,48,107)', width=1)  # Border styling for bars
-            )
-        )]
+st.set_page_config(
+    layout="wide",
+    initial_sidebar_state="expanded",
     )
 
-    # Update layout for better appearance
+def time_and_memory_streamlit(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        # Start tracking memory and time
+        tracemalloc.start()
+        start_time = time.time()
+
+        try:
+            # Call the actual function
+            result = func(*args, **kwargs)
+        finally:
+            # Calculate memory and time usage
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+
+            # Display results in Streamlit
+            st.write(f"**Function Name:** `{func.__name__}`")
+            st.write(f"**Time Taken:** `{elapsed_time:.2f} seconds`")
+            st.write(f"**Memory Usage:** `{current / 1024:.2f} KiB` (Current), `{peak / 1024:.2f} KiB` (Peak)")
+
+        return result
+    return wrapper
+
+
+import plotly.graph_objects as go
+
+import plotly.graph_objects as go
+
+def create_graph():
+    # Define node attributes
+    nodes = {
+        "WAREHOUSE": ["node_type", "name", "type", "location", "size_category", "max_capacity", "current_capacity", "safety_stock", "max_parts", "id"],
+        "FACILITY": ["node_type", "name", "type", "location", "max_capacity", "operating_cost", "id"],
+        "PARTS": ["node_type", "name", "type", "subtype", "cost", "importance_factor", "valid_from", "valid_till", "id"]
+    }
+
+    # Define edge attributes
+    edges = {
+        "WAREHOUSEToPARTS": ["relationship_type", "inventory_level", "storage_cost", "source", "target"],
+        "FACILITYToPARTS": ["relationship_type", "production_cost", "lead_time", "quantity", "source", "target"],
+        "PARTSToFACILITY": ["relationship_type", "quantity", "distance", "transport_cost", "lead_time", "source", "target"]
+    }
+
+    # Create a new figure
+    fig = go.Figure()
+
+    # Define node positions with more separation
+    positions = {
+        "WAREHOUSE": (0, 0.2),  # Left-center
+        "FACILITY": (0, -0.3),  # Left-center (same x as WAREHOUSE but different y for vertical separation)
+        "PARTS": (1, 0)  # Right-center
+    }
+
+    # Add edges
+    fig.add_trace(go.Scatter(
+        x=[positions["WAREHOUSE"][0], positions["PARTS"][0]],
+        y=[positions["WAREHOUSE"][1], positions["PARTS"][1]],
+        mode='lines', line=dict(width=2, color='white'),
+        hoverinfo='text',
+        text=['<b>WAREHOUSEToPARTS</b><br>' + '<br>'.join(edges["WAREHOUSEToPARTS"])]
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[positions["FACILITY"][0], positions["PARTS"][0]],
+        y=[positions["FACILITY"][1], positions["PARTS"][1]],
+        mode='lines', line=dict(width=2, color='white'),
+        hoverinfo='text',
+        text=['<b>FACILITYToPARTS</b><br>' + '<br>'.join(edges["FACILITYToPARTS"])]
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=[positions["PARTS"][0], positions["FACILITY"][0]],
+        y=[positions["PARTS"][1], positions["FACILITY"][1]],
+        mode='lines', line=dict(width=2, color='white'),
+        hoverinfo='text',
+        text=['<b>PARTSToFACILITY</b><br>' + '<br>'.join(edges["PARTSToFACILITY"])]
+    ))
+
+    # Add nodes
+    for node, (x, y) in positions.items():
+        fig.add_trace(go.Scatter(
+            x=[x], y=[y], mode='markers+text',
+            marker=dict(size=15, color={'WAREHOUSE': 'blue', 'FACILITY': 'orange', 'PARTS': 'green'}[node]),
+            text=[node], textposition='top center', hoverinfo='text',
+            hovertext=f'<b>{node}</b><br>' + '<br>'.join(nodes[node])
+        ))
+
+    # Update layout
     fig.update_layout(
-        title=title,
-        title_x=0.5,  # Center the title
+        title=dict(
+            text="Parts Schema",
+            x=0.5, xanchor='center', yanchor='top'
+        ),
+        height=400,
+        width=500,  # Adjust width for a tighter fit
+        margin=dict(l=20, r=20, t=40, b=20),  # Minimized margins
+        xaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False,
+            range=[-0.2, 1.2]  # Adjust x-axis range to fit nodes snugly
+        ),
+        yaxis=dict(
+            showgrid=False, zeroline=False, showticklabels=False,
+            range=[-0.6, 0.6]  # Adjust y-axis range to fit nodes snugly
+        ),
+        showlegend=False,
+        font=dict(color="white", size=10),
+        hoverlabel=dict(bgcolor="black", font_color="white"),
+        plot_bgcolor='rgba(0,0,0,0)',
+        paper_bgcolor='rgba(0,0,0,0)',
+    )
+
+    return fig
+
+
+import plotly.express as px
+import pandas as pd
+
+import plotly.express as px
+import pandas as pd
+
+import plotly.express as px
+import pandas as pd
+
+import plotly.express as px
+import pandas as pd
+
+def create_bar_chart(data, title, x_title, y_title):
+    # Convert the input data dictionary to a DataFrame
+    df = pd.DataFrame(list(data.items()), columns=[x_title, y_title])
+
+    # Create the bar chart using plotly.express
+    fig = px.bar(df, x=x_title, y=y_title, title=title)
+
+    # Update the bar color (light blue)
+    fig.update_traces(marker_color='#ADD8E6')
+
+    # Center the title
+    fig.update_layout(
+        title=dict(
+            text=title,
+            x=0.5,  # Center the title horizontally
+            xanchor='center',  # Align the title to the center
+            yanchor='top'  # Align the title at the top
+        ),
         xaxis_title=x_title,
         yaxis_title=y_title,
-        template="plotly_dark",  # Light theme for clarity
-        plot_bgcolor="rgba(17,17,17,255)",  # Light gray background for the plot
+        plot_bgcolor="rgba(17,17,17,255)",  # Dark background for the plot
         font=dict(
             family="Arial, sans-serif",  # Font style
             size=14,  # Font size
             color="white"  # Font color
         ),
+        margin=dict(l=50, r=50, t=40, b=80),  # Adjust margins for better layout
         xaxis=dict(
             tickangle=45,  # Rotate x-axis labels for better readability
-            showgrid=False,  # Show grid on x-axis
+            showgrid=False,  # Hide x-axis grid
         ),
         yaxis=dict(
-            showgrid=False,  # Show grid on y-axis
+            showgrid=False,  # Hide y-axis grid
             zeroline=True,  # Show a line at zero
         ),
-        margin=dict(l=50, r=50, t=40, b=80),  # Adjust margins for better layout
     )
 
     return fig
+
+
+
 
 
 def donut_chart(data, title="Raw Material Distribution"):
@@ -79,7 +217,7 @@ def donut_chart(data, title="Raw Material Distribution"):
     fig.update_layout(
         title=dict(
             text=title,
-            x=0.5,  # Center the title
+            x=0,  # Center the title
             font=dict(size=20)
         ),
         template="plotly_dark",
@@ -97,12 +235,6 @@ def donut_chart(data, title="Raw Material Distribution"):
     )
 
     return fig
-
-
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
 
 # Add decorator for time and memory tracking (Assuming the time_and_memory decorator is implemented elsewhere)
 # from some_module import time_and_memory
@@ -254,7 +386,7 @@ def query_suppliers_for_part_via_warehouse(timestamp, part_id):
     return df
 
 # Query: Distance Impact on Costs
-import pandas as pd
+
 
 def parts_with_larger_distances_and_lower_costs(timestamp, min_distance, max_transport_cost):
     
@@ -333,7 +465,7 @@ def main():
         
     </style>
     """, unsafe_allow_html=True)
-
+    st.title("Parts Dashboard")
     if "temporal_graph" not in st.session_state:
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
@@ -363,8 +495,8 @@ def main():
     cols0,cols1,cols2,cols3 = st.columns(4)
 
     with cols0 :
-        st.write("hello")
-        pass
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
 
     with cols1 :
         fig = create_bar_chart(raw,"Raw Materials","Parts","Number of Raw Parts")
@@ -378,7 +510,8 @@ def main():
         fig = donut_chart(type)
         st.plotly_chart(fig)
     
-        
+    st.divider() 
+
     query_option = st.selectbox("Select a Query Option", ["Valid Parts Query", "Most Common Subtypes Query", 
                                                         "Bottleneck Parts Analysis", "Suppliers for Part", 
                                                         "Parts with Larger Distances and Lower Costs"])

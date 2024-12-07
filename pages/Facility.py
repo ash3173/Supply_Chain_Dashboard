@@ -10,6 +10,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import networkx as nx
 
+st.set_page_config(
+    layout="wide",
+    initial_sidebar_state="expanded",
+    )
 def time_and_memory_streamlit(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -34,10 +38,7 @@ def time_and_memory_streamlit(func):
 
         return result
     return wrapper
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
+
 
 def create_graph():
     # Define node attributes
