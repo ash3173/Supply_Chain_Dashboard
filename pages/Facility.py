@@ -274,6 +274,7 @@ def compute_average_operating_costs(facilities):
 
     return lam_avg_cost, external_avg_cost
 
+@st.fragment
 def node_details_input(facility_nodes):
     col1,col2=st.columns([2,1])
     with col1:
@@ -471,7 +472,7 @@ def ego_graph_query(graph, node_id, radius):
 
 def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, identifier2):
     # Create a figure with two vertically stacked subplots
-    fig, axs = plt.subplots(2, 1, figsize=(3, 4), facecolor='none')  # Reduced height
+    fig, axs = plt.subplots(2, 1, figsize=(2, 3), facecolor='none')  # Reduced height
     fig.patch.set_alpha(0)  # Transparent background
     
     for ax, operating_cost, identifier in zip(axs, [operating_cost1, operating_cost2], [identifier1, identifier2]):
@@ -480,7 +481,7 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
         ax.set_ylim(-1, 1)
        
         # Draw a circle in the middle
-        circle = Circle((0, 0.5), 0.3, edgecolor='#2596be', facecolor='none', linewidth=3)
+        circle = Circle((0, 0.5), 0.35, edgecolor='#2596be', facecolor='none', linewidth=3)
         ax.add_artist(circle)
        
         # Add identifier text
@@ -503,13 +504,7 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
     
     # Adjust the figure to remove space around the subplots and move everything up
     fig.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05)  # Increase the top margin and reduce the bottom margin to move up
-    caption = "This is a figure caption with extra spaces  "
 
-
-
-# Remove trailing spaces using rstrip()
-
-    clean_caption = caption.rstrip()
 
     return fig
 
@@ -570,7 +565,8 @@ def main():
             fig = plot_average_operating_cost(lam_avg_cost, "LAM",external_avg_cost, "External")
             
             st.pyplot(fig)
-    st.divider()
+    st.markdown("<hr style='margin-top: -50px; margin-bottom: -50px; border: none; border-top: 1px solid #ccc;' />", unsafe_allow_html=True)
+
     node_details_input(facility_nodes)
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line

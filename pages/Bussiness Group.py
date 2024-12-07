@@ -449,7 +449,7 @@ def main():
         with cols[i+1]:
             st.pyplot(fig2)
     
-    st.divider() 
+    st.markdown("<hr style='margin-top: -50px; margin-bottom: -50px; border: none; border-top: 1px solid #ccc;' />", unsafe_allow_html=True)
     fig1 = plot_revenue(revenue_of_business_group_across_time)
     st.plotly_chart(fig1, use_container_width=True)
 
