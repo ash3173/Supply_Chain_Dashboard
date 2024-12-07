@@ -82,6 +82,7 @@ def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshol
 
     return suppliers
 
+@st.fragment
 def node_details_input(supplier_data):
     col1,col2=st.columns([2,1])
     with col1:

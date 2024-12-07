@@ -44,10 +44,6 @@ def time_and_memory_streamlit(func):
     return wrapper
 
 
-import plotly.graph_objects as go
-
-import plotly.graph_objects as go
-
 def create_graph():
     # Define node attributes
     nodes = {
@@ -134,63 +130,8 @@ def create_graph():
     return fig
 
 
-import plotly.express as px
-import pandas as pd
-
-import plotly.express as px
-import pandas as pd
-
-import plotly.express as px
-import pandas as pd
-
-import plotly.express as px
-import pandas as pd
-
-def create_bar_chart(data, title, x_title, y_title):
-    # Convert the input data dictionary to a DataFrame
-    df = pd.DataFrame(list(data.items()), columns=[x_title, y_title])
-
-    # Create the bar chart using plotly.express
-    fig = px.bar(df, x=x_title, y=y_title, title=title)
-
-    # Update the bar color (light blue)
-    fig.update_traces(marker_color='#ADD8E6')
-
-    # Center the title
-    fig.update_layout(
-        title=dict(
-            text=title,
-            x=0.5,  # Center the title horizontally
-            xanchor='center',  # Align the title to the center
-            yanchor='top'  # Align the title at the top
-        ),
-        xaxis_title=x_title,
-        yaxis_title=y_title,
-        plot_bgcolor="rgba(17,17,17,255)",  # Dark background for the plot
-        font=dict(
-            family="Arial, sans-serif",  # Font style
-            size=14,  # Font size
-            color="white"  # Font color
-        ),
-        margin=dict(l=50, r=50, t=40, b=80),  # Adjust margins for better layout
-        xaxis=dict(
-            tickangle=45,  # Rotate x-axis labels for better readability
-            showgrid=False,  # Hide x-axis grid
-        ),
-        yaxis=dict(
-            showgrid=False,  # Hide y-axis grid
-            zeroline=True,  # Show a line at zero
-        ),
-    )
-
-    return fig
-
-
-
-
 
 def donut_chart(data, title="Raw Material Distribution"):
-
     labels = list(data.keys())
     values = list(data.values())
 
@@ -208,33 +149,41 @@ def donut_chart(data, title="Raw Material Distribution"):
                 textinfo="label+percent",
                 textfont=dict(size=15),
                 marker=dict(colors=colors, line=dict(color='#FFFFFF', width=2)),  # Add white borders
-                pull=[0.1, 0, 0.1],  # Slightly "pull out" small and large categories
+                pull=[0.1 if v == max(values) else 0 for v in values],  # Pull only the largest segment
             )
         ]
     )
 
-    # Update layout for better appearance
+    # Update layout for consistent styling with bar chart
     fig.update_layout(
         title=dict(
             text=title,
-            x=0,  # Center the title
-            font=dict(size=20)
+            x=0.5,  # Center the title horizontally
+            xanchor='center',  # Align title to center
+            yanchor='top',  # Align title at the top
+            font=dict(size=16),  # Match font size
+            y=0.89
         ),
-        template="plotly_dark",
-        showlegend=True,
+        height=400,  # Set consistent figure height
+        margin=dict(l=80, r=40, t=80, b=50),  # Adjust margins
+        font=dict(
+            family="Arial, sans-serif",  # Consistent font
+            size=14,  # Label font size
+            color="white"  # Use black text
+        ),
         annotations=[
             dict(
-                text="Sizes",
+                text="Sizes",  # Inner circle text
                 x=0.5,
                 y=0.5,
-                font_size=18,
+                font=dict(size=16, color='white'),  # Match annotation styling
                 showarrow=False,
-                font_color='gray'
             )
         ]
     )
 
     return fig
+
 
 # Add decorator for time and memory tracking (Assuming the time_and_memory decorator is implemented elsewhere)
 # from some_module import time_and_memory
@@ -423,7 +372,24 @@ def parts_with_larger_distances_and_lower_costs(timestamp, min_distance, max_tra
     return results_df
 
 
+def create_bar(mydict,title):
+    df = pd.DataFrame.from_dict(mydict, orient='index', columns=['Frequency'])
+    df = df.reset_index().rename(columns={'index': 'Parts'})
+    fig2 = px.bar(df, x='Parts', y='Frequency', title=title)
+    fig2.update_traces(marker_color='#ADD8E6')
 
+    # Center the title
+    fig2.update_layout(
+        title=dict(
+            text=title,
+            x=0.5,  # Center the title
+            xanchor='center',  # Align to center horizontally
+            yanchor='top'  # Align vertically at the top
+        ),
+        height=370,
+        
+    )
+    return fig2
             
             
 
@@ -481,10 +447,11 @@ def main():
         "subassembly" : 0
     }
 
+    parts_nodes=data["node_values"]["PARTS"]
     raw = defaultdict(int)
     subassembly = defaultdict(int)
 
-    for i in data["node_values"]["PARTS"] :
+    for i in parts_nodes :
         type[i[2]] += 1
 
         if i[2] == "raw" :
@@ -492,18 +459,18 @@ def main():
         else :
             subassembly[i[3]] += 1
     
-    cols0,cols1,cols2,cols3 = st.columns(4)
+    cols0,cols1,cols2,cols3 = st.columns([1,1,1,1.5])
 
     with cols0 :
         fig = create_graph()
         st.plotly_chart(fig, use_container_width=True)
 
     with cols1 :
-        fig = create_bar_chart(raw,"Raw Materials","Parts","Number of Raw Parts")
+        fig = create_bar(raw,"Raw Materials")
         st.plotly_chart(fig)
 
     with cols2:
-        fig = create_bar_chart(raw,"Subassembly Materials","Parts","Number of Subassembly Parts")
+        fig = create_bar(subassembly,"Subassembly Materials")
         st.plotly_chart(fig)
 
     with cols3 :
@@ -512,6 +479,9 @@ def main():
     
     st.divider() 
 
+    # node_details_input(supplier_data)
+
+    st.divider() 
     query_option = st.selectbox("Select a Query Option", ["Valid Parts Query", "Most Common Subtypes Query", 
                                                         "Bottleneck Parts Analysis", "Suppliers for Part", 
                                                         "Parts with Larger Distances and Lower Costs"])
