@@ -323,6 +323,7 @@ def plotly_ego_graph(ego_graph):
         xaxis=dict(showgrid=False, zeroline=False, visible=False),
         yaxis=dict(showgrid=False, zeroline=False, visible=False),
         height=400,
+        margin=dict(l=80, r=40, t=80, b=50),  # Adjust margins
     )
 
     fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
