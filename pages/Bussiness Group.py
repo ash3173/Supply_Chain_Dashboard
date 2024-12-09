@@ -143,6 +143,8 @@ def node_details(node_index, business_group_id,timestamp):
             # Visualize and render the ego graph with Plotly
             fig = plotly_ego_graph(ego_graph)
             st.plotly_chart(fig)  # Display the figure in Streamlit
+
+
 def create_graph():
     # Define node attributes for Business Group and Product Family
     nodes = {
@@ -202,39 +204,44 @@ def create_graph():
 
     return fig
 
-
 def plot_revenue(data):
-    num_business_units = len(data)
+    # Extract business group IDs and their respective data
+    business_units = list(data.keys())
+    num_business_units = len(business_units)
 
     # Create a subplot layout with one plot per business unit
     fig = make_subplots(
         rows=1, cols=num_business_units,
-        subplot_titles=[f"Business Unit {i+1}" for i in range(num_business_units)]
+        subplot_titles=[f"{unit}" for unit in business_units]
     )
 
     # Colors for each business unit
     colors = ['#2196F3', '#4CAF50', '#FF9800', '#9C27B0', '#FFC107', '#00BCD4', '#795548', '#607D8B']
 
     # Plot each business unit
-    for i, d in enumerate(data):
-        x_values = list(range(len(d)))
+    for i, unit in enumerate(business_units):
+        unit_data = data[unit]
+        x_values = [item[0] for item in unit_data]  # Extract timestamps
+        y_values = [item[1] for item in unit_data]  # Extract revenues
 
         # Add the line plot with shaded area
         fig.add_trace(
             go.Scatter(
                 x=x_values,
-                y=d,
+                y=y_values,
                 mode='lines',
-                line=dict(color=colors[i], width=2),
+                line=dict(color=colors[i % len(colors)], width=2),
                 fill='tozeroy',  # Fill area under the line
-                fillcolor=f"rgba({int(colors[i][1:3], 16)}, {int(colors[i][3:5], 16)}, {int(colors[i][5:], 16)}, 0.3)",
-                name=f"Business Unit {i+1}"
+                fillcolor=f"rgba({int(colors[i % len(colors)][1:3], 16)}, "
+                          f"{int(colors[i % len(colors)][3:5], 16)}, "
+                          f"{int(colors[i % len(colors)][5:], 16)}, 0.3)",
+                name=f"{unit}"
             ),
             row=1, col=i+1
         )
 
     # Consistent y-axis limits
-    max_y = max([max(bu) for bu in data]) * 1.1
+    max_y = max([max([item[1] for item in data[unit]]) for unit in business_units]) * 1.1
     for i in range(1, num_business_units + 1):
         fig.update_yaxes(range=[0, max_y], title="Revenue", row=1, col=i)
         fig.update_xaxes(title="Time", row=1, col=i)
@@ -412,6 +419,8 @@ def main():
     with cols0:
         st.title("Business Group Dashboard")
         timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
+        start_range, end_range = timerange
+
     # with cols2:
     #     st.write(" ")
     #     st.write(" ")
@@ -424,27 +433,23 @@ def main():
         return
 
     highest_business_group = []  # Heap to store the highest business groups
-    revenue_of_business_group_across_time = []
-    totalTimeStamps = len(st.session_state.temporal_graph.files)
+    revenue_of_business_group_across_time = {}
+    # totalTimeStamps = len(st.session_state.temporal_graph.files)
     
-    for time in range(totalTimeStamps):
-        url_data = requests.get(st.session_state.temporal_graph.files[time])
-        if url_data.status_code != 200:
-            st.error("Failed to load data from the server.")
-            return
-            
-        data = url_data.json()
+    for time in range(start_range, end_range):
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
         business_nodes = data["node_values"]["BUSINESS_GROUP"]
+        # st.write(business_nodes[0])
         
         for i in range(len(business_nodes)):
-            heapq.heappush(highest_business_group, (-business_nodes[i][-2], business_nodes[i][-1], time))
+            heapq.heappush(highest_business_group, (business_nodes[i][-2], business_nodes[i][-1], time))
             if len(highest_business_group) > 3:
                 heapq.heappop(highest_business_group)
 
-            if len(revenue_of_business_group_across_time) < i + 1:
-                revenue_of_business_group_across_time.append([])
+            if business_nodes[i][-1] not in revenue_of_business_group_across_time :
+                revenue_of_business_group_across_time[business_nodes[i][-1]] = []
 
-            revenue_of_business_group_across_time[i].append(business_nodes[i][-2])
+            revenue_of_business_group_across_time[business_nodes[i][-1]].append((time,business_nodes[i][-2]))
     
     # Display the top 3 business groups in columns
     cols = st.columns(len(highest_business_group)+1)
@@ -452,9 +457,10 @@ def main():
         fig = create_graph()
         st.plotly_chart(fig, use_container_width=True)
     
+    highest_business_group.sort(reverse=True)
     for i in range(len(highest_business_group)):
-        revenue, identifier, month_index = heapq.heappop(highest_business_group)
-        fig2 = plot_higest_revenue(-revenue, identifier, month_index)
+        revenue, identifier, month_index = highest_business_group[i]
+        fig2 = plot_higest_revenue(revenue, identifier, month_index)
         with cols[i+1]:
             st.pyplot(fig2)
     
