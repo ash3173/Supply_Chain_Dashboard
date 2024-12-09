@@ -43,51 +43,60 @@ def time_and_memory_streamlit(func):
 
 
 
-@st.fragment
-def node_details_input():
-    
-    col1, col2 = st.columns([1.5, 1],gap="large")
-    with col2:
-        st.write("###")
-        timestamp = st.slider("Select Timestamp", min_value=0, max_value=len(st.session_state.temporal_graph.files)-1)
-    with col1:
+# @st.fragment
+# def node_details_input(timestamp):
+#     col1, col2 = st.columns([2, 1])
+#     with col1:
         
-        bg_index = st.session_state.temporal_graph.create_node_type_index(timestamp)["BUSINESS_GROUP"]
+#         bg_index = st.session_state.temporal_graph.create_node_type_index(timestamp)["BUSINESS_GROUP"]
+#         # Heading for the Business Group Info
+#         st.write("### Business Group Info")
+        
+#         # Use the keys of the index dictionary directly
+#         all_business_groups = ["Select Business Group"] + list(bg_index.keys())
+
+#         # Create a selectbox using these keys
+#         business_group_id = st.selectbox("Choose Business Id", all_business_groups)
+#     # Display node details if a valid business group is selected
+#     if business_group_id != "Select Business Group":
+#         # node_details(node_index, business_group_id)
+#         node_details(bg_index, business_group_id)
+
+
+@st.fragment
+def node_details_input(business_nodes):
+    col1,col2=st.columns([2,1])
+    with col1:
         # Heading for the Business Group Info
         st.write("### Business Group Info")
-        
-        # Use the keys of the index dictionary directly
-        all_business_groups = ["Select Business Group"] + list(bg_index.keys())
+        all_business_groups = ["Select Business Group"]
+        for business_group in business_nodes:
+            all_business_groups.append(business_group[-1])
 
-        # Create a selectbox using these keys
-        business_group_id = st.selectbox("Choose Business Id", all_business_groups)
-    # Display node details if a valid business group is selected
-    if business_group_id != "Select Business Group":
-        # node_details(node_index, business_group_id)
-        node_details(bg_index, business_group_id,timestamp)
+
+        business_group_id = st.selectbox("Choose Business Id",all_business_groups)
     
+    if business_group_id!="Select Business Group":
+        node_details(business_nodes, business_group_id)
 
-
-    
 @st.fragment
 @time_and_memory_streamlit
-def node_details(node_index, business_group_id,timestamp):
-    col1, col2 = st.columns(2)
+def node_details(business_nodes,business_group_id):
+    col1, col2=st.columns(2)
     with col1:
+        # Heading for the Business Group Info
         st.write("### Business Group Info")
-        
-        # Fetch details directly from the index dictionary
-        node_data = node_index.get(business_group_id)
-        
-        if node_data:
-            attributes = [
-                ("Node Type", "🔗"),
-                ("Name", "📛"),
-                ("Description", "📝"),
-                ("Revenue", "💰"),
-                ("ID", "🆔")
-            ]
-            st.markdown("""
+    
+        attributes = [
+            ("Node Type", "🔗"),
+            ("Name", "📛"),
+            ("Description", "📝"),
+            ("Revenue", "💰"),
+            ("ID", "🆔")
+        ]
+
+        # Style for the no-border table
+        st.markdown("""
             <style>
                 .business-group-table {
                     width: 100%;
@@ -113,36 +122,92 @@ def node_details(node_index, business_group_id,timestamp):
             </style>
         """, unsafe_allow_html=True)
 
-            # Ensure node_data is a list and extract values based on their order
-            table_rows = ""
-            for index, (attr, icon) in enumerate(attributes):
-                value = node_data[index] if index < len(node_data) else "N/A"
-                table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
+        found = False
 
-            st.markdown(
-                f"""
-                <table class="business-group-table">
-                    {table_rows}
-                </table>
-                """,
-                unsafe_allow_html=True
-            )
-        else:
-            st.warning("Business Group ID not found.")
+        # Loop through business group data to find matching Business Group ID and display details
+        for val in business_nodes:  # Replace with your actual business group data source
+            if business_group_id and business_group_id in val:
+                found = True
+
+                # Create a no-border table for displaying attributes and values
+                table_rows = ""
+                for attr, icon in attributes:
+                    # Extract values dynamically based on attributes
+                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
+
+                # Display the table
+                st.markdown(
+                    f"""
+                    <table class="business-group-table">
+                        {table_rows}
+                    </table>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        if not found:
+            st.warning('Enter a valid Business Group ID')
+        with col2:
+            if found:
+                graph=st.session_state.temporal_graph.load_graph_at_timestamp(2)
+                ego_graph = ego_graph_query(graph, business_group_id, 1)
+                if ego_graph:
+                    st.write(f"### Neighbors for {business_group_id}")
+                    # st.write(f"Ego Graph for Node: {supplier_id}")
+                    # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+                    # Visualize and render the ego graph with Plotly
+                    fig = plotly_ego_graph(ego_graph)
+                    st.plotly_chart(fig)  # Display the figure in Streamlit
+# @st.fragment
+# @time_and_memory_streamlit
+# def node_details(node_index, business_group_id):
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         st.write("### Business Group Info")
+        
+#         # Fetch details directly from the index dictionary
+#         node_data = node_index.get(business_group_id)
+        
+#         if node_data:
+#             attributes = [
+#                 ("Node Type", "🔗"),
+#                 ("Name", "📛"),
+#                 ("Description", "📝"),
+#                 ("Revenue", "💰"),
+#                 ("ID", "🆔")
+#             ]
+
+#             # Ensure node_data is a list and extract values based on their order
+#             table_rows = ""
+#             for index, (attr, icon) in enumerate(attributes):
+#                 value = node_data[index] if index < len(node_data) else "N/A"
+#                 table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
+
+#             st.markdown(
+#                 f"""
+#                 <table class="business-group-table">
+#                     {table_rows}
+#                 </table>
+#                 """,
+#                 unsafe_allow_html=True
+#             )
+#         else:
+#             st.warning("Business Group ID not found.")
 
 
-    with col2:
-        # if found:
-        graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-        ego_graph = ego_graph_query(graph, business_group_id, 2)
-        if ego_graph:
-            st.write(f"### Neighbors for {business_group_id}")
-            # st.write(f"Ego Graph for Node: {supplier_id}")
-            # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+#     with col2:
+#         # if found:
+#         graph=st.session_state.temporal_graph.load_graph_at_timestamp(2)
+#         ego_graph = ego_graph_query(graph, business_group_id, 1)
+#         if ego_graph:
+#             st.write(f"### Neighbors for {business_group_id}")
+#             # st.write(f"Ego Graph for Node: {supplier_id}")
+#             # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
 
-            # Visualize and render the ego graph with Plotly
-            fig = plotly_ego_graph(ego_graph)
-            st.plotly_chart(fig)  # Display the figure in Streamlit
+#             # Visualize and render the ego graph with Plotly
+#             fig = plotly_ego_graph(ego_graph)
+#             st.plotly_chart(fig)  # Display the figure in Streamlit
 def create_graph():
     # Define node attributes for Business Group and Product Family
     nodes = {
@@ -408,15 +473,7 @@ def main():
     </style>
     """, unsafe_allow_html=True)
 
-    cols0,cols2=st.columns([2,1],gap='large')
-    with cols0:
-        st.title("Business Group Dashboard")
-        timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
-    # with cols2:
-    #     st.write(" ")
-    #     st.write(" ")
-    #     st.write(" ")
-    #     timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
+    st.title("Business Group Dashboard")
     
     # Validate session state
     if "temporal_graph" not in st.session_state:
@@ -464,7 +521,8 @@ def main():
 
 
     st.divider()  
-    node_details_input()
+    timestamp = st.sidebar.slider("Select Timestamp", min_value=0, max_value=len(st.session_state.temporal_graph.files) - 1)
+    node_details_input(business_nodes)
 
 
     st.text(" ")  # Adds one blank line
