@@ -2,6 +2,7 @@ import json
 from functools import lru_cache
 import networkx as nx
 import requests
+import os
 import streamlit as st
 
 
@@ -9,10 +10,24 @@ class TemporalGraphClass:
     def __init__(self, files):
         self.files = files  # List of JSON file paths
 
+    @st.cache_data
+    def load_json_at_timestamp(_self, timestamp):
+
+        file_path = _self.files[timestamp]
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"The file {file_path} does not exist.")
+
+        with open(file_path, "r") as f:
+            data = json.load(f)
+
+        return data
+
+
     # @lru_cache(maxsize=10)
     @st.cache_data
     def load_graph_at_timestamp(_self, timestamp):
-        data = requests.get(_self.files[timestamp]).json()
+        with open(_self.files[timestamp]) as f:
+            data = json.load(f)
         return _self._json_to_graph(data)
 
     def _json_to_graph(self, data):
@@ -37,7 +52,7 @@ class TemporalGraphClass:
     @st.cache_data
     def create_node_type_index(_self, timestamp):
         """Create and cache an index for all node types."""
-        data = requests.get(_self.files[timestamp]).json()  # Access _self instead of self
+        data = _self.load_json_at_timestamp(timestamp)
         node_values = data["node_values"]
 
         # Create an index for each node type
