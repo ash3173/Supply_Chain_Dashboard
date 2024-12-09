@@ -216,7 +216,7 @@ def node_details(node_index, part_id,timestamp):
                     unsafe_allow_html=True
                 )
         else:
-            st.warning("Business Group ID not found.")
+            st.warning("Part ID not found.")
 
     with col2:
         # if found:
