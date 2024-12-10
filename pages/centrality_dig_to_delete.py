@@ -81,83 +81,64 @@ def count_connections_and_find_max_nodes(data):
   
    return grouped_nodes, max_connections_nodes, max_connections
 
-def display_node_boxes(df):
-    col1, col2, col3, col4 = st.columns(4)
-    col5, col6, col7 = st.columns(3)
-    
-    # Get first row data
-    first_row = df.iloc[0]
-    
-   
-    box_style = """
-    padding: 10px;
-    border-radius: 5px;
-    color: white;
-    background: linear-gradient(135deg, #6e8efb, #a777e3);
-    border: 1px solid black;
-    margin: 5px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-"""
+def display_node_boxes(first_row):
+    st.write("## Key Schema Information")
 
-    # Display boxes in the layout
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>{first_row['BusinessGroup']}</h3>
-                <p>Business Group</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.info(
+            f"""
+            **Business Group**
+            {first_row['BusinessGroup']}
+            """
+        )
     with col2:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>Product Family</h3>
-                <p>{first_row['ProductFamily']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.info(
+            f"""
+            **Product Family**
+            {first_row['ProductFamily']}
+            """
+        )
     with col3:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>Product Offering</h3>
-                <p>{first_row['ProductOffering']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.info(
+            f"""
+            **Product Offering**
+            {first_row['ProductOffering']}
+            """
+        )
+
+    col4, col5, col6 = st.columns(3)
     with col4:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>Facility</h3>
-                <p>{first_row['Facility']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.info(
+            f"""
+            **Facility**
+            {first_row['Facility']}
+            """
+        )
     with col5:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>Parts</h3>
-                <p>{first_row['Parts']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.info(
+            f"""
+            **Parts**
+            {first_row['Parts']}
+            """
+        )
     with col6:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>Suppliers</h3>
-                <p>{first_row['Suppliers']}</p>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        st.info(
+            f"""
+            **Suppliers**
+            {first_row['Suppliers']}
+            """
+        )
+
+    col7 = st.columns(1)[0]
     with col7:
-        st.markdown(f"""
-            <div style="{box_style}">
-                <h3>Warehouse</h3>
-                <p>{first_row['Warehouse']}</p>
-            </div>
-        """, unsafe_allow_html=True)
+        st.info(
+            f"""
+            **Warehouse**
+            {first_row['Warehouse']}
+            """
+        )
+    
   
 def main():
     st.title("Network Analysis Dashboard")
@@ -183,14 +164,10 @@ def main():
     
     df = pd.DataFrame(df_data)
     
-    # Display results
-    st.subheader("Network Analysis Results")
-    st.write(f"Nodes with maximum connections ({max_connections} connections):", 
-            ", ".join(max_connections_nodes))
-    
-    # Display boxes
-    st.subheader("Nodes with Highest Degree Centrality by Group")
-    display_node_boxes(df)
+    cols = st.columns(2)
+    with cols[0]:
+        st.subheader("Nodes with Highest Degree Centrality by Group")
+        display_node_boxes(df)
 
 if __name__ == "__main__":
    main()
