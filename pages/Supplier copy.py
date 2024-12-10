@@ -13,6 +13,31 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 
+def static_part():
+    timestamp = 1
+
+    # Load the JSON data at the given timestamp
+    # with open(st.session_state.temporal_graph.files[timestamp], 'r') as f:
+    #     data = json.load(f)
+    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
+    # if url_data.status_code != 200:
+    #     st.error("Failed to load data from the server.")
+    #     return
+    # data = url_data.json()
+    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+
+    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
+
+    with col1:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        fig1, fig2,supplier_data = get_visualization(data)
+        st.plotly_chart(fig1, use_container_width=True)  # Display figure 1
+
+    with col3:
+        st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
 # Define the function to query lead time
 @time_and_memory_streamlit
 def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_id):
@@ -474,30 +499,7 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
 
-    timestamp = 1
-
-    # Load the JSON data at the given timestamp
-    # with open(st.session_state.temporal_graph.files[timestamp], 'r') as f:
-    #     data = json.load(f)
-    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
-    # if url_data.status_code != 200:
-    #     st.error("Failed to load data from the server.")
-    #     return
-    # data = url_data.json()
-    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-
-    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
-
-    with col1:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        fig1, fig2,supplier_data = get_visualization(data)
-        st.plotly_chart(fig1, use_container_width=True)  # Display figure 1
-
-    with col3:
-        st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
+    static_part()
 
     st.divider() 
     

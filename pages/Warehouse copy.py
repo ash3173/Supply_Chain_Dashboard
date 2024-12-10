@@ -24,6 +24,54 @@ def query_transportation_cost_for_supplier_and_warehouse(G, supplier_id, warehou
             return edge_data.get("transportation_cost")
     return None
 
+def static_part():
+    timestamp = 2
+    
+    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
+    # if url_data.status_code != 200:
+    #     st.error("Failed to load data from the server.")
+    #     return
+    # data = url_data.json()
+    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+    warehouse_nodes = data["node_values"]["WAREHOUSE"]
+    warehouse_data = {
+        "supplier": {},
+        "subassembly": {},
+        "lam": {}
+    }
+
+    warehouse_size = {
+        "small" : 0 ,
+        "medium" : 0,
+        "large" : 0
+    }
+
+    for warehouse in warehouse_nodes:
+        type = warehouse[2]
+        state = warehouse[3]
+        size = warehouse[4]
+
+        warehouse_size[size] += 1
+        if state not in warehouse_data[type]:
+            warehouse_data[type][state] = 0
+
+        warehouse_data[type][state] += 1
+
+    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
+
+    with col1:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        fig = create_warehouse_map(warehouse_data)
+        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
+
+
+    with col3:
+        fig = donut_chart(warehouse_size)
+        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
+
 
 def create_graph():
     # Define node attributes
@@ -521,53 +569,8 @@ def main():
     if "temporal_graph" not in st.session_state:
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
+    static_part()
     
-    timestamp = 2
-    
-    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
-    # if url_data.status_code != 200:
-    #     st.error("Failed to load data from the server.")
-    #     return
-    # data = url_data.json()
-    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-    warehouse_nodes = data["node_values"]["WAREHOUSE"]
-    warehouse_data = {
-        "supplier": {},
-        "subassembly": {},
-        "lam": {}
-    }
-
-    warehouse_size = {
-        "small" : 0 ,
-        "medium" : 0,
-        "large" : 0
-    }
-
-    for warehouse in warehouse_nodes:
-        type = warehouse[2]
-        state = warehouse[3]
-        size = warehouse[4]
-
-        warehouse_size[size] += 1
-        if state not in warehouse_data[type]:
-            warehouse_data[type][state] = 0
-
-        warehouse_data[type][state] += 1
-
-    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
-
-    with col1:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        fig = create_warehouse_map(warehouse_data)
-        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
-
-
-    with col3:
-        fig = donut_chart(warehouse_size)
-        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
     
     st.divider() 
     
