@@ -41,7 +41,57 @@ def time_and_memory_streamlit(func):
         return result
     return wrapper
 
+@st.fragment
+def static_part():
+    cols0,cols2=st.columns([3,1],gap='large')
+    with cols0:
+        timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
+        start_range, end_range = timerange
 
+    # with cols2:
+    #     st.write(" ")
+    #     st.write(" ")
+    #     st.write(" ")
+    #     timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
+    
+    # Validate session state
+    
+
+    highest_business_group = []  # Heap to store the highest business groups
+    revenue_of_business_group_across_time = {}
+    # totalTimeStamps = len(st.session_state.temporal_graph.files)
+    
+    for time in range(start_range, end_range):
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
+        business_nodes = data["node_values"]["BUSINESS_GROUP"]
+        # st.write(business_nodes[0])
+        
+        for i in range(len(business_nodes)):
+            heapq.heappush(highest_business_group, (business_nodes[i][-2], business_nodes[i][-1], time))
+            if len(highest_business_group) > 3:
+                heapq.heappop(highest_business_group)
+
+            if business_nodes[i][-1] not in revenue_of_business_group_across_time :
+                revenue_of_business_group_across_time[business_nodes[i][-1]] = []
+
+            revenue_of_business_group_across_time[business_nodes[i][-1]].append((time,business_nodes[i][-2]))
+    
+    # Display the top 3 business groups in columns
+    cols = st.columns(len(highest_business_group)+1)
+    with cols[0]:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+    
+    highest_business_group.sort(reverse=True)
+    for i in range(len(highest_business_group)):
+        revenue, identifier, month_index = highest_business_group[i]
+        fig2 = plot_higest_revenue(revenue, identifier, month_index)
+        with cols[i+1]:
+            st.pyplot(fig2)
+    
+    st.markdown("<hr style='margin-top: -50px; margin-bottom: -50px; border: none; border-top: 1px solid #ccc;' />", unsafe_allow_html=True)
+    fig1 = plot_revenue(revenue_of_business_group_across_time)
+    st.plotly_chart(fig1, use_container_width=True)
 
 @st.fragment
 def node_details_input():
@@ -134,7 +184,7 @@ def node_details(node_index, business_group_id,timestamp):
     with col2:
         # if found:
         graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-        ego_graph = ego_graph_query(graph, business_group_id, 2)
+        ego_graph = ego_graph_query(graph, business_group_id, 1)
         if ego_graph:
             st.write(f"### Neighbors for {business_group_id}")
             # st.write(f"Ego Graph for Node: {supplier_id}")
@@ -337,21 +387,6 @@ def plotly_ego_graph(ego_graph):
     fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
     return fig
 
-
-@st.fragment
-def ego(business_group_id):
-    graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-    ego_graph = ego_graph_query(graph, business_group_id, 1)
-    if ego_graph:
-        st.write(f"### Neighbors for {business_group_id}")
-        # st.write(f"Ego Graph for Node: {supplier_id}")
-        # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-        # Visualize and render the ego graph with Plotly
-        fig = plotly_ego_graph(ego_graph)
-        st.plotly_chart(fig)  # Display the figure in Streamlit
-
-
 def ego_graph_query(graph, node_id, radius):
     """
     Returns the ego graph for a specific node within a given radius.
@@ -404,69 +439,36 @@ def main():
     # Adjust global Streamlit styling
     st.markdown("""
     <style>
+        /* Remove blank space at top and bottom */
         .block-container {
-            padding-top: 1rem; /* Reduce top padding */
+            padding-top: 1rem; /* Add some padding to avoid cutting off the title */
             padding-bottom: 0rem;
         }
-        .css-1v3fvcr {
-            margin-top: 0rem;
-            margin-bottom: 0rem;
+
+        /* Adjust canvas positioning */
+        .st-emotion-cache-z5fcl4 {
+            position: relative;
+            top: -30px; /* Adjusted to avoid cutting the title */
         }
+
+        /* Toolbar transparency and content accessibility */
+        .st-emotion-cache-18ni7ap {
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0%); /* Use correct rgba syntax for transparency */
+        }
+        .st-emotion-cache-zq5wmm {
+            pointer-events: auto;
+            background: rgb(255, 255, 255);
+            border-radius: 5px;
+        }
+        
     </style>
     """, unsafe_allow_html=True)
-
-    cols0,cols2=st.columns([2,1],gap='large')
-    with cols0:
-        st.title("Business Group Dashboard")
-        timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
-        start_range, end_range = timerange
-
-    # with cols2:
-    #     st.write(" ")
-    #     st.write(" ")
-    #     st.write(" ")
-    #     timerange = st.slider("Select a range of timestamp", 0, len(st.session_state.temporal_graph.files), (0,len(st.session_state.temporal_graph.files)))
-    
-    # Validate session state
+    st.title("Business Group Dashboard")
     if "temporal_graph" not in st.session_state:
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
-
-    highest_business_group = []  # Heap to store the highest business groups
-    revenue_of_business_group_across_time = {}
-    # totalTimeStamps = len(st.session_state.temporal_graph.files)
-    
-    for time in range(start_range, end_range):
-        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
-        business_nodes = data["node_values"]["BUSINESS_GROUP"]
-        # st.write(business_nodes[0])
-        
-        for i in range(len(business_nodes)):
-            heapq.heappush(highest_business_group, (business_nodes[i][-2], business_nodes[i][-1], time))
-            if len(highest_business_group) > 3:
-                heapq.heappop(highest_business_group)
-
-            if business_nodes[i][-1] not in revenue_of_business_group_across_time :
-                revenue_of_business_group_across_time[business_nodes[i][-1]] = []
-
-            revenue_of_business_group_across_time[business_nodes[i][-1]].append((time,business_nodes[i][-2]))
-    
-    # Display the top 3 business groups in columns
-    cols = st.columns(len(highest_business_group)+1)
-    with cols[0]:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-    
-    highest_business_group.sort(reverse=True)
-    for i in range(len(highest_business_group)):
-        revenue, identifier, month_index = highest_business_group[i]
-        fig2 = plot_higest_revenue(revenue, identifier, month_index)
-        with cols[i+1]:
-            st.pyplot(fig2)
-    
-    st.markdown("<hr style='margin-top: -50px; margin-bottom: -50px; border: none; border-top: 1px solid #ccc;' />", unsafe_allow_html=True)
-    fig1 = plot_revenue(revenue_of_business_group_across_time)
-    st.plotly_chart(fig1, use_container_width=True)
+    static_part()
 
 
     st.divider()  
