@@ -401,11 +401,8 @@ def main():
 
     for time in range(totalTimeStamps) :
 
-        url_data = requests.get(st.session_state.temporal_graph.files[time])
-        if url_data.status_code != 200:
-            st.error("Failed to load data from the server.")
-            return
-        data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
+
 
         PRODUCT_FAMILY = data["node_values"]["PRODUCT_FAMILY"]
 

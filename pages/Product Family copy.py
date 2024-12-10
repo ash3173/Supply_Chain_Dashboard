@@ -7,6 +7,8 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import networkx as nx
 
+from utils import time_and_memory_streamlit, plotly_ego_graph, ego_graph_query
+
 st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
@@ -164,91 +166,6 @@ def plot_revenues(data):
     )
 
     return fig1, fig2
-
-def plotly_ego_graph(ego_graph):
-    """
-    Visualizes the ego graph using Plotly, displaying node IDs as labels and attributes on hover.
-    """
-    pos = nx.spring_layout(ego_graph)
-    
-    # Edges
-    edge_x = []
-    edge_y = []
-    edge_hover_text = []
-
-    for edge in ego_graph.edges(data=True):
-        x0, y0 = pos[edge[0]]
-        x1, y1 = pos[edge[1]]
-        edge_x.append(x0)
-        edge_y.append(y0)
-        edge_x.append(x1)
-        edge_y.append(y1)
-        edge_x.append(None)  # To separate edges visually
-        edge_y.append(None)
-
-        # Format hover text for edges
-        attributes = edge[2]
-        hover_details = [f"{key}: {value}" for key, value in attributes.items()]
-        edge_hover_text.append("<br>".join(hover_details))
-
-    edge_trace = go.Scatter(
-        x=edge_x,
-        y=edge_y,
-        line=dict(width=0.5, color="gray"),
-        hoverinfo="text",
-        hovertext=edge_hover_text,  # Show edge attributes on hover
-        mode="lines"
-    )
-
-    # Nodes
-    node_x = []
-    node_y = []
-    node_ids = []
-    node_hover_text = []
-
-    for node in ego_graph.nodes(data=True):
-        x, y = pos[node[0]]
-        node_x.append(x)
-        node_y.append(y)
-        node_ids.append(str(node[0]))  # Use node ID as label
-
-        # Format hover text for nodes
-        attributes = node[1]
-        hover_details = [f"{key}: {value}" for key, value in attributes.items()]
-        node_hover_text.append("<br>".join(hover_details))
-
-    node_trace = go.Scatter(
-        x=node_x,
-        y=node_y,
-        mode="markers+text",  # Display labels with text
-        text=node_ids,  # Node IDs as labels
-        textposition="top center",
-        hoverinfo="text",
-        hovertext=node_hover_text,  # Show attributes on hover
-        marker=dict(
-            showscale=False,
-            colorscale="YlGnBu",
-            size=20,
-            color=[1] * len(node_x),
-        ),
-    )
-
-    layout = go.Layout(
-        title=dict(
-            text="Ego Graph Visualization",
-            x=0.0,
-            font=dict(size=18)
-        ),
-        showlegend=False,
-        hovermode="closest",
-        xaxis=dict(showgrid=False, zeroline=False, visible=False),
-        yaxis=dict(showgrid=False, zeroline=False, visible=False),
-        height=400,
-        margin=dict(l=80, r=40, t=80, b=50),  # Adjust margins
-    )
-
-    fig = go.Figure(data=[edge_trace, node_trace], layout=layout)
-    return fig
 
 @st.fragment
 def node_details_input():
@@ -433,14 +350,6 @@ def node_details(node_index, product_family_id,timestamp):
 #                 st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
-def ego_graph_query(graph, node_id, radius):
-    """
-    Returns the ego graph for a specific node within a given radius.
-    """
-    ego_graph = nx.ego_graph(graph, node_id, radius=radius)
-    return ego_graph 
-
-
 
 def plot_higest_revenue(revenue, identifier,q):
 
@@ -498,11 +407,13 @@ def main():
 
     for time in range(totalTimeStamps) :
 
-        url_data = requests.get(st.session_state.temporal_graph.files[time])
-        if url_data.status_code != 200:
-            st.error("Failed to load data from the server.")
-            return
-        data = url_data.json()
+        # url_data = requests.get(st.session_state.temporal_graph.files[time])
+        # if url_data.status_code != 200:
+        #     st.error("Failed to load data from the server.")
+        #     return
+        # data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
+
 
         PRODUCT_FAMILY = data["node_values"]["PRODUCT_FAMILY"]
 

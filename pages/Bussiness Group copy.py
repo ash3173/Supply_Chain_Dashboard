@@ -485,12 +485,7 @@ def main():
     totalTimeStamps = len(st.session_state.temporal_graph.files)
     
     for time in range(totalTimeStamps):
-        url_data = requests.get(st.session_state.temporal_graph.files[time])
-        if url_data.status_code != 200:
-            st.error("Failed to load data from the server.")
-            return
-            
-        data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
         business_nodes = data["node_values"]["BUSINESS_GROUP"]
         
         for i in range(len(business_nodes)):

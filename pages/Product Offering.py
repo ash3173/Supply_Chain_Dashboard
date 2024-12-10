@@ -390,11 +390,12 @@ def query_product_cost_demand_across_timestamps(temporal_graph, product_offering
     demands = []
 
     for timestamp, file_url in enumerate(temporal_graph.files):
-        url_data = requests.get(file_url)
-        if url_data.status_code != 200:
-            continue
+        # url_data = requests.get(file_url)
+        # if url_data.status_code != 200:
+        #     continue
 
-        data = url_data.json()
+        # data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
         product_offerings = get_product_offerings(data)
         for offering in product_offerings:
             if offering.get("id") == product_offering_id:
@@ -469,11 +470,12 @@ def get_top_demand_products(temporal_graph, num_timestamps, top_n=3):
     demand_records = []
 
     for timestamp in range(num_timestamps):
-        url_data = requests.get(temporal_graph.files[timestamp])
-        if url_data.status_code != 200:
-            continue
+        # url_data = requests.get(temporal_graph.files[timestamp])
+        # if url_data.status_code != 200:
+        #     continue
 
-        data = url_data.json()
+        # data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
         product_offerings = get_product_offerings(data)
 
         for offering in product_offerings:
@@ -555,13 +557,7 @@ def main():
 
     # Iterate through all timestamps
     for timestamp in range(len(temporal_graph.files)):
-        url_data = requests.get(temporal_graph.files[timestamp])
-        if url_data.status_code != 200:
-            st.error(f"Failed to load data for timestamp {timestamp}. Skipping...")
-            continue
-
-        # Parse data
-        data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
 
         # Retrieve PRODUCT_FAMILY to PRODUCT_OFFERING relationships
         family_to_offering_relationships = get_product_family_to_offering_relationships(data)

@@ -717,7 +717,8 @@ def main():
     
     timestamp = st.sidebar.slider("Select Timestamp", min_value=0, max_value=len(st.session_state.temporal_graph.files) - 1)
     
-    data = requests.get(st.session_state.temporal_graph.files[timestamp]).json()
+    # data = requests.get(st.session_state.temporal_graph.files[timestamp]).json()
+    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
 
     
     type = {
