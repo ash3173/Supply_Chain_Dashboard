@@ -17,7 +17,45 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 
+def static_part():
+    timestamp = 0
+    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
 
+    
+    type = {
+        "raw" : 0,
+        "subassembly" : 0
+    }
+
+    parts_nodes=data["node_values"]["PARTS"]
+    raw = defaultdict(int)
+    subassembly = defaultdict(int)
+
+    for i in parts_nodes :
+        type[i[2]] += 1
+
+        if i[2] == "raw" :
+            raw[i[3]] += 1
+        else :
+            subassembly[i[3]] += 1
+    
+    cols0,cols1,cols2,cols3 = st.columns([1,1,1,1.5])
+
+    with cols0 :
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+
+    with cols1 :
+        fig = create_bar(raw,"Raw Materials")
+        st.plotly_chart(fig)
+
+    with cols2:
+        fig = create_bar(subassembly,"Subassembly Materials")
+        st.plotly_chart(fig)
+
+    with cols3 :
+        fig = donut_chart(type)
+        st.plotly_chart(fig)
 def create_graph():
     # Define node attributes
     nodes = {
@@ -464,17 +502,7 @@ def create_bar(mydict,title):
         
     )
     return fig2
-            
-            
 
-def get_part_ids(timestamp):
-    
-    G = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-    return [
-        node_id
-        for node_id, data in G.nodes(data=True)
-        if data.get("node_type") == "PARTS"
-    ]
 
 @st.fragment
 def queries():
@@ -536,7 +564,7 @@ def queries():
 
 
         elif query_option == "Suppliers for Part":
-            part_ids = get_part_ids(timestamp)
+            part_ids = st.session_state.temporal_graph.create_node_type_index(timestamp)["PARTS"].keys()
             if part_ids:
                 part_ids = st.selectbox(
                     "Select PART ID",
@@ -596,48 +624,7 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
 
-    
-    
-    
-    # data = requests.get(st.session_state.temporal_graph.files[1]).json()
-    timestamp = 1
-    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-
-    
-    type = {
-        "raw" : 0,
-        "subassembly" : 0
-    }
-
-    parts_nodes=data["node_values"]["PARTS"]
-    raw = defaultdict(int)
-    subassembly = defaultdict(int)
-
-    for i in parts_nodes :
-        type[i[2]] += 1
-
-        if i[2] == "raw" :
-            raw[i[3]] += 1
-        else :
-            subassembly[i[3]] += 1
-    
-    cols0,cols1,cols2,cols3 = st.columns([1,1,1,1.5])
-
-    with cols0 :
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-
-    with cols1 :
-        fig = create_bar(raw,"Raw Materials")
-        st.plotly_chart(fig)
-
-    with cols2:
-        fig = create_bar(subassembly,"Subassembly Materials")
-        st.plotly_chart(fig)
-
-    with cols3 :
-        fig = donut_chart(type)
-        st.plotly_chart(fig)
+    static_part()
     
     st.divider() 
 
