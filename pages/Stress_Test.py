@@ -4,6 +4,8 @@ import tracemalloc
 import psutil
 import multiprocessing
 import os
+import importlib
+
 
 # # Set page configuration
 # st.set_page_config(
@@ -13,36 +15,42 @@ import os
 #     initial_sidebar_state="expanded",
 # )
 
-from pages.Business_Group import (
-   static_part as bg_static_part,
-   node_details_input as bg_node_details_input,
-   create_graph as bg_create_graph
-)
-from pages.Parts_copy import(
-    static_part as p_static_part,   
-    node_details_input as p_node_details_input,   
-    queries as p_queries
-)
-from pages.Product_Family_copy import(
-    static_part as pf_static_part,
-    node_details_input as pf_node_details_input,
-    create_graph as pf_create_graph
-)
-from pages.Product_Offering_copy import(
-    static_part as po_static_part,
-    node_details_input as po_node_details_input,
-    queries as po_queries
-)
-from pages.Warehouse_copy import(
-    static_part as w_static_part,   
-    node_details_input as w_node_details_input,   
-    create_graph as w_create_graph
-)
-from pages.Supplier_copy import(
-    static_part as sup_static_part,
-    node_details_input as sup_node_details_input,
-    queries as sup_queries
-)
+ordered_filenames = [
+    '1_Business_Group',
+    '6_Parts',
+    '2_Product_Family',
+    '3_Product_Offering',
+    '5_Warehouse',
+    '7_Supplier'
+]
+
+# Import modules dynamically and store in a dictionary
+modules = {name: importlib.import_module(f'pages.{name}') for name in ordered_filenames}
+
+# Access attributes from the modules
+bg_static_part = modules['1_Business_Group'].static_part
+bg_node_details_input = modules['1_Business_Group'].node_details_input
+bg_create_graph = modules['1_Business_Group'].create_graph
+
+p_static_part = modules['6_Parts'].static_part
+p_node_details_input = modules['6_Parts'].node_details_input
+p_queries = modules['6_Parts'].queries
+
+pf_static_part = modules['2_Product_Family'].static_part
+pf_node_details_input = modules['2_Product_Family'].node_details_input
+pf_create_graph = modules['2_Product_Family'].create_graph
+
+po_static_part = modules['3_Product_Offering'].static_part
+po_node_details_input = modules['3_Product_Offering'].node_details_input
+po_queries = modules['3_Product_Offering'].queries
+
+w_static_part = modules['5_Warehouse'].static_part
+w_node_details_input = modules['5_Warehouse'].node_details_input
+w_create_graph = modules['5_Warehouse'].create_graph
+
+sup_static_part = modules['7_Supplier'].static_part
+sup_node_details_input = modules['7_Supplier'].node_details_input
+sup_queries = modules['7_Supplier'].queries
 #add facility later
 
 class PageStressTester:
@@ -254,6 +262,7 @@ def display_comprehensive_metrics(metrics):
            st.error(f"Error: {result['error']}")
 
 def main():
+    st.title("Stress Test")
     # Configuration section
     col1, col2, col3 = st.columns(3)
 
