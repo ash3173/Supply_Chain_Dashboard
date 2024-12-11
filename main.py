@@ -23,7 +23,7 @@ st.set_page_config(
 # getdata = f"{base_url}/archive/schema/{version}"
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
-base_url = "http://172.17.149.236/api"
+base_url = "http://172.17.149.238/api"
 version = "NSS_1000_12_Simulation" 
 
 getVersions = f"{base_url}/versions"
@@ -126,7 +126,7 @@ def check_warehouse_have_enough_raw_material(data,raw_materials) :
 
 # need to change
 def get_supplier_for_raw_material(data,raw_materials) :
-    path = "E:\LAM\Graph Server\Supply_Chain_Dashboard\suppliers_parts_data_unused.json"
+    path = "suppliers_parts_data_unused.json"
     with open(path,'r') as f : 
         supplier_data = json.load(f)
 

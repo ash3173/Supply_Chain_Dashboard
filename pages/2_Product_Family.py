@@ -14,6 +14,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 
+@st.fragment
 def static_part():
     totalTimeStamps=len(st.session_state.temporal_graph.files)
     highest_quarterly_revenue = [0, 0, 0, 0]
@@ -25,6 +26,17 @@ def static_part():
     pf_data={"PF_001":"Kyo","PF_002":"Coronus","PF_003":"Flex","PF_004":"Versys Metal"}
     
     for time in range(totalTimeStamps) :
+        
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
+        
+
+        PRODUCT_FAMILY = data["node_values"]["PRODUCT_FAMILY"]
+
+        for i in range(len(PRODUCT_FAMILY)) :
+            if PRODUCT_FAMILY[i][1] not in revenue_of_product_offering_across_time :
+                revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]] = []
+
+            revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]].append(PRODUCT_FAMILY[i][-2])
 
         product_index=st.session_state.temporal_graph.create_node_type_index(time)["PRODUCT_FAMILY"]
         
@@ -440,7 +452,7 @@ def plot_higest_revenue(revenue, identifier,q,percent_revenue):
     )
 
     ax.text(
-        0, -0.4, f"Percentage Revenue : {percent_revenue}", 
+        0, -0.4, f"Percentage Revenue : {percent_revenue}%", 
         fontsize=12, ha='center', va='center', color='white', style='italic', weight='bold'
     )
 
