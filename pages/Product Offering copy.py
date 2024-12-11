@@ -21,7 +21,151 @@ st.set_page_config(
     )
 
 
+def static_part():
+    temporal_graph = st.session_state.temporal_graph
+    num_timestamps = len(temporal_graph.files)
 
+
+    top_products = get_top_demand_products(temporal_graph, num_timestamps)
+    # Display top products in individual boxes
+    st.text("Top Product Offerings by Demand")
+    # Get the top products by demand
+    top_products = get_top_demand_products(temporal_graph, num_timestamps)
+
+    # st.subheader("Top Product Offerings by Demand")
+
+    # Visualize each product using Streamlit's metric cards
+    if top_products:
+        cols = st.columns(len(top_products))
+
+        for i, product in enumerate(top_products):
+            timestamp, product_name, demand = product
+            with cols[i]:
+                # Format demand to 3 decimal places
+                formatted_demand = f"{demand:.3f}"
+                st.metric(label=f"Product: {product_name} (Timestamp: {timestamp})", value=f"{formatted_demand}")
+    else:
+        st.info("No product offerings data found.")
+
+    # cols = st.columns(3)
+
+    # i = 0
+    # if top_products:
+    #     for product in top_products:
+    #         timestamp, product_name, demand = product
+    #         fig = plot_highest_demand(demand, product_name, timestamp)
+    #         with cols[i] :
+    #             st.pyplot(fig)
+    #         i += 1
+    # else:
+    #     st.info("No product offerings data found.")
+    
+    
+
+
+        
+    all_avg_costs = {}
+    all_avg_demands = {}
+
+    # Iterate through all timestamps
+    for timestamp in range(len(temporal_graph.files)):
+        # url_data = requests.get(temporal_graph.files[timestamp])
+        # if url_data.status_code != 200:
+        #     st.error(f"Failed to load data for timestamp {timestamp}. Skipping...")
+        #     continue
+
+        # # Parse data
+        # data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+
+        # Retrieve PRODUCT_FAMILY to PRODUCT_OFFERING relationships
+        family_to_offering_relationships = get_product_family_to_offering_relationships(data)
+
+        # Retrieve PRODUCT_OFFERING nodes
+        product_offerings = get_product_offerings(data)
+
+        # Create a lookup dictionary for PRODUCT_OFFERING nodes by ID
+        offering_lookup = {po["id"]: po for po in product_offerings}
+
+        # Calculate average cost and demand for each product family
+        family_avg_cost = {}
+        family_avg_demand = {}
+
+        for relationship in family_to_offering_relationships:
+            source = relationship["source"]  # PRODUCT_FAMILY ID
+            target = relationship["target"]  # PRODUCT_OFFERING ID
+
+            if target in offering_lookup:
+                offering = offering_lookup[target]
+                cost = offering.get("cost", 0)
+                demand = offering.get("demand", 0)
+
+                if source not in family_avg_cost:
+                    family_avg_cost[source] = []
+                    family_avg_demand[source] = []
+
+                family_avg_cost[source].append(cost)
+                family_avg_demand[source].append(demand)
+
+        # Store average values for the timestamp
+        all_avg_costs[timestamp] = {family: sum(costs) / len(costs) for family, costs in family_avg_cost.items()}
+        all_avg_demands[timestamp] = {family: sum(demands) / len(demands) for family, demands in family_avg_demand.items()}
+
+    # Convert data into time-series format for plotting
+    time_series_cost = pd.DataFrame(all_avg_costs).T.fillna(0)
+    time_series_demand = pd.DataFrame(all_avg_demands).T.fillna(0)
+    st.divider()
+    # Plotting
+    cols0,cols1,cols2=st.columns([1,2,2])
+    with cols0:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+    with cols1:
+
+        fig_cost = go.Figure()
+        for family_id in time_series_cost.columns:
+            fig_cost.add_trace(go.Scatter(
+                x=time_series_cost.index,
+                y=time_series_cost[family_id],
+                mode='lines+markers',
+                name=f"Family {family_id}"
+            ))
+        fig_cost.update_layout( title=dict(
+                                text="Average Cost of Product Family Across Timestamps",
+                                x=0,         # Horizontal position of the title (0 = far left, 1 = far right, 0.5 = center)
+                                xanchor='left',  # Anchor the title to the center horizontally
+                                y=0.964,        # Vertical position of the title (1 = top, 0 = bottom)
+                                yanchor='top'   # Anchor the title to the top vertically
+                            ),
+                            xaxis_title="Timestamp",
+                            height=400,
+                            width=600,
+                            yaxis_title="Average Cost")
+        st.plotly_chart(fig_cost)
+
+    with cols2:
+
+        fig_demand = go.Figure()
+        for family_id in time_series_demand.columns:
+            fig_demand.add_trace(go.Scatter(
+                x=time_series_demand.index,
+                y=time_series_demand[family_id],
+                mode='lines+markers',
+                name=f"Family {family_id}"
+            ))
+        fig_demand.update_layout(title=dict(
+                                text="Average Demand of Product Family Across Timestamps",
+                                x=0,         # Horizontal position of the title (0 = far left, 1 = far right, 0.5 = center)
+                                xanchor='left',  # Anchor the title to the center horizontally
+                                y=0.964,        # Vertical position of the title (1 = top, 0 = bottom)
+                                yanchor='top'   # Anchor the title to the top vertically
+                                ),
+                                height=400,
+                                width=600,
+                                xaxis_title="Timestamp",
+                                yaxis_title="Average Demand")
+        st.plotly_chart(fig_demand)
+        # num_timestamps = len(temporal_graph.files)
 @st.fragment
 def node_details_input():
 
@@ -588,153 +732,10 @@ def main():
     if "temporal_graph" not in st.session_state:
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
-    temporal_graph = st.session_state.temporal_graph
-    num_timestamps = len(temporal_graph.files)
-
-
-    top_products = get_top_demand_products(temporal_graph, num_timestamps)
-    # Display top products in individual boxes
-    st.text("Top Product Offerings by Demand")
-    # Get the top products by demand
-    top_products = get_top_demand_products(temporal_graph, num_timestamps)
-
-    # st.subheader("Top Product Offerings by Demand")
-
-    # Visualize each product using Streamlit's metric cards
-    if top_products:
-        cols = st.columns(len(top_products))
-
-        for i, product in enumerate(top_products):
-            timestamp, product_name, demand = product
-            with cols[i]:
-                # Format demand to 3 decimal places
-                formatted_demand = f"{demand:.3f}"
-                st.metric(label=f"Product: {product_name} (Timestamp: {timestamp})", value=f"{formatted_demand}")
-    else:
-        st.info("No product offerings data found.")
-
-    # cols = st.columns(3)
-
-    # i = 0
-    # if top_products:
-    #     for product in top_products:
-    #         timestamp, product_name, demand = product
-    #         fig = plot_highest_demand(demand, product_name, timestamp)
-    #         with cols[i] :
-    #             st.pyplot(fig)
-    #         i += 1
-    # else:
-    #     st.info("No product offerings data found.")
-    
-    
-
-
-        
-    all_avg_costs = {}
-    all_avg_demands = {}
-
-    # Iterate through all timestamps
-    for timestamp in range(len(temporal_graph.files)):
-        # url_data = requests.get(temporal_graph.files[timestamp])
-        # if url_data.status_code != 200:
-        #     st.error(f"Failed to load data for timestamp {timestamp}. Skipping...")
-        #     continue
-
-        # # Parse data
-        # data = url_data.json()
-        data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-
-        # Retrieve PRODUCT_FAMILY to PRODUCT_OFFERING relationships
-        family_to_offering_relationships = get_product_family_to_offering_relationships(data)
-
-        # Retrieve PRODUCT_OFFERING nodes
-        product_offerings = get_product_offerings(data)
-
-        # Create a lookup dictionary for PRODUCT_OFFERING nodes by ID
-        offering_lookup = {po["id"]: po for po in product_offerings}
-
-        # Calculate average cost and demand for each product family
-        family_avg_cost = {}
-        family_avg_demand = {}
-
-        for relationship in family_to_offering_relationships:
-            source = relationship["source"]  # PRODUCT_FAMILY ID
-            target = relationship["target"]  # PRODUCT_OFFERING ID
-
-            if target in offering_lookup:
-                offering = offering_lookup[target]
-                cost = offering.get("cost", 0)
-                demand = offering.get("demand", 0)
-
-                if source not in family_avg_cost:
-                    family_avg_cost[source] = []
-                    family_avg_demand[source] = []
-
-                family_avg_cost[source].append(cost)
-                family_avg_demand[source].append(demand)
-
-        # Store average values for the timestamp
-        all_avg_costs[timestamp] = {family: sum(costs) / len(costs) for family, costs in family_avg_cost.items()}
-        all_avg_demands[timestamp] = {family: sum(demands) / len(demands) for family, demands in family_avg_demand.items()}
-
-    # Convert data into time-series format for plotting
-    time_series_cost = pd.DataFrame(all_avg_costs).T.fillna(0)
-    time_series_demand = pd.DataFrame(all_avg_demands).T.fillna(0)
-    st.divider()
-    # Plotting
-    cols0,cols1,cols2=st.columns([1,2,2])
-    with cols0:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-    with cols1:
-
-        fig_cost = go.Figure()
-        for family_id in time_series_cost.columns:
-            fig_cost.add_trace(go.Scatter(
-                x=time_series_cost.index,
-                y=time_series_cost[family_id],
-                mode='lines+markers',
-                name=f"Family {family_id}"
-            ))
-        fig_cost.update_layout( title=dict(
-                                text="Average Cost of Product Family Across Timestamps",
-                                x=0,         # Horizontal position of the title (0 = far left, 1 = far right, 0.5 = center)
-                                xanchor='left',  # Anchor the title to the center horizontally
-                                y=0.964,        # Vertical position of the title (1 = top, 0 = bottom)
-                                yanchor='top'   # Anchor the title to the top vertically
-                            ),
-                            xaxis_title="Timestamp",
-                            height=400,
-                            width=600,
-                            yaxis_title="Average Cost")
-        st.plotly_chart(fig_cost)
-
-    with cols2:
-
-        fig_demand = go.Figure()
-        for family_id in time_series_demand.columns:
-            fig_demand.add_trace(go.Scatter(
-                x=time_series_demand.index,
-                y=time_series_demand[family_id],
-                mode='lines+markers',
-                name=f"Family {family_id}"
-            ))
-        fig_demand.update_layout(title=dict(
-                                text="Average Demand of Product Family Across Timestamps",
-                                x=0,         # Horizontal position of the title (0 = far left, 1 = far right, 0.5 = center)
-                                xanchor='left',  # Anchor the title to the center horizontally
-                                y=0.964,        # Vertical position of the title (1 = top, 0 = bottom)
-                                yanchor='top'   # Anchor the title to the top vertically
-                                ),
-                                height=400,
-                                width=600,
-                                xaxis_title="Timestamp",
-                                yaxis_title="Average Demand")
-        st.plotly_chart(fig_demand)
-        # num_timestamps = len(temporal_graph.files)
+    static_part()
 
     st.divider()
-    po_data = data["node_values"]["PRODUCT_OFFERING"]
+    
 
     node_details_input()
     

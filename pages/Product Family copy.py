@@ -14,6 +14,69 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 
+def static_part():
+    totalTimeStamps=len(st.session_state.temporal_graph.files)
+
+    revenue_of_product_offering_across_time = {}
+
+    for time in range(totalTimeStamps) :
+
+        # url_data = requests.get(st.session_state.temporal_graph.files[time])
+        # if url_data.status_code != 200:
+        #     st.error("Failed to load data from the server.")
+        #     return
+        # data = url_data.json()
+        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
+
+
+        PRODUCT_FAMILY = data["node_values"]["PRODUCT_FAMILY"]
+
+        for i in range(len(PRODUCT_FAMILY)) :
+            if PRODUCT_FAMILY[i][1] not in revenue_of_product_offering_across_time :
+                revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]] = []
+
+            revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]].append(PRODUCT_FAMILY[i][-2])
+
+    highest_quarterly_revenue = [0] * len(revenue_of_product_offering_across_time)
+    highest_quarterly_revenue_product_group = [""] * len(revenue_of_product_offering_across_time)
+    st.write(revenue_of_product_offering_across_time )
+    for k,v in revenue_of_product_offering_across_time.items() :
+        s1 = sum(v[:3]) / 3
+        s2 = sum(v[3:6]) / 3
+        s3 = sum(v[6:9]) / 3
+        s4 = sum(v[9:]) / 3
+
+        if s1 > highest_quarterly_revenue[0] :
+            highest_quarterly_revenue[0] = s1
+            highest_quarterly_revenue_product_group[0] = k
+
+        if s2 > highest_quarterly_revenue[1] :
+            highest_quarterly_revenue[1] = s2
+            highest_quarterly_revenue_product_group[1] = k
+
+        if s3 > highest_quarterly_revenue[2] :
+            highest_quarterly_revenue[2] = s3
+            highest_quarterly_revenue_product_group[2] = k
+
+        if s4 > highest_quarterly_revenue[3] :
+            highest_quarterly_revenue[3] = s4
+            highest_quarterly_revenue_product_group[3] = k
+
+    cols = st.columns(4)
+
+    for i in range(len(highest_quarterly_revenue)) :
+        revenue, identifier = highest_quarterly_revenue[i], highest_quarterly_revenue_product_group[i]
+        fig = plot_higest_revenue(revenue, identifier, i+1)
+        with cols[i]:
+            st.pyplot(fig)
+    cols=st.columns([1,3])
+    with cols[0]:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+    with cols[1]:
+        fig1,fig2 = plot_revenues(revenue_of_product_offering_across_time)
+        st.plotly_chart(fig1, use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True)
 def create_graph():
     # Define node attributes
     nodes = {
@@ -401,68 +464,7 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
     
-    totalTimeStamps=len(st.session_state.temporal_graph.files)
-
-    revenue_of_product_offering_across_time = {}
-
-    for time in range(totalTimeStamps) :
-
-        # url_data = requests.get(st.session_state.temporal_graph.files[time])
-        # if url_data.status_code != 200:
-        #     st.error("Failed to load data from the server.")
-        #     return
-        # data = url_data.json()
-        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
-
-
-        PRODUCT_FAMILY = data["node_values"]["PRODUCT_FAMILY"]
-
-        for i in range(len(PRODUCT_FAMILY)) :
-            if PRODUCT_FAMILY[i][1] not in revenue_of_product_offering_across_time :
-                revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]] = []
-
-            revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]].append(PRODUCT_FAMILY[i][-2])
-
-    highest_quarterly_revenue = [0] * len(revenue_of_product_offering_across_time)
-    highest_quarterly_revenue_product_group = [""] * len(revenue_of_product_offering_across_time)
-
-    for k,v in revenue_of_product_offering_across_time.items() :
-        s1 = sum(v[:3]) / 3
-        s2 = sum(v[3:6]) / 3
-        s3 = sum(v[6:9]) / 3
-        s4 = sum(v[9:]) / 3
-
-        if s1 > highest_quarterly_revenue[0] :
-            highest_quarterly_revenue[0] = s1
-            highest_quarterly_revenue_product_group[0] = k
-
-        if s2 > highest_quarterly_revenue[1] :
-            highest_quarterly_revenue[1] = s2
-            highest_quarterly_revenue_product_group[1] = k
-
-        if s3 > highest_quarterly_revenue[2] :
-            highest_quarterly_revenue[2] = s3
-            highest_quarterly_revenue_product_group[2] = k
-
-        if s4 > highest_quarterly_revenue[3] :
-            highest_quarterly_revenue[3] = s4
-            highest_quarterly_revenue_product_group[3] = k
-
-    cols = st.columns(4)
-
-    for i in range(len(highest_quarterly_revenue)) :
-        revenue, identifier = highest_quarterly_revenue[i], highest_quarterly_revenue_product_group[i]
-        fig = plot_higest_revenue(revenue, identifier, i+1)
-        with cols[i]:
-            st.pyplot(fig)
-    cols=st.columns([1,3])
-    with cols[0]:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-    with cols[1]:
-        fig1,fig2 = plot_revenues(revenue_of_product_offering_across_time)
-        st.plotly_chart(fig1, use_container_width=True)
-    st.plotly_chart(fig2, use_container_width=True)
+    static_part()
 
     st.divider()  
     node_details_input()

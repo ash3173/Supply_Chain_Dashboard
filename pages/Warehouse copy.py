@@ -185,14 +185,14 @@ def node_details(node_index, war_id,timestamp):
         
         if node_data:
             attributes = [
-            ("Node Type", "🏗️"),
+            ("Node Type", "🏗"),
             ("Name", "📛"),
-            ("Type", "⚙️"),
+            ("Type", "⚙"),
             ("Location", "📍"),
             ("Size Category", "📏"),
             ("Max Capacity", "🔢"),
             ("Current Capacity", "📦"),
-            ("Safety Stock", "🛡️"),
+            ("Safety Stock", "🛡"),
             ("Max Parts", "🔧"),
             ("ID", "🆔")
             ]
@@ -262,14 +262,14 @@ def node_details(node_index, war_id,timestamp):
 #         st.write("### Warehouse Info")
 
 #         attributes = [
-#             ("Node Type", "🏗️"),
+#             ("Node Type", "🏗"),
 #             ("Name", "📛"),
-#             ("Type", "⚙️"),
+#             ("Type", "⚙"),
 #             ("Location", "📍"),
 #             ("Size Category", "📏"),
 #             ("Max Capacity", "🔢"),
 #             ("Current Capacity", "📦"),
-#             ("Safety Stock", "🛡️"),
+#             ("Safety Stock", "🛡"),
 #             ("Max Parts", "🔧"),
 #             ("ID", "🆔")
 #         ]
@@ -580,6 +580,7 @@ def find_parts_for_warehouse(graph, warehouse_id):
 
 def find_warehouses_below_safety_stock(graph):
     understocked_warehouses = []
+
     for node, data in graph.nodes(data=True):
         if data.get("node_type") == "WAREHOUSE":
             current_capacity = data.get("current_capacity", 0)
