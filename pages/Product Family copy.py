@@ -39,7 +39,7 @@ def static_part():
 
     highest_quarterly_revenue = [0] * len(revenue_of_product_offering_across_time)
     highest_quarterly_revenue_product_group = [""] * len(revenue_of_product_offering_across_time)
-
+    st.write(revenue_of_product_offering_across_time )
     for k,v in revenue_of_product_offering_across_time.items() :
         s1 = sum(v[:3]) / 3
         s2 = sum(v[3:6]) / 3
