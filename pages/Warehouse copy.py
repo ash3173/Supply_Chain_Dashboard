@@ -633,22 +633,24 @@ def find_parts_for_warehouse(graph, warehouse_id):
     parts_df = pd.DataFrame(parts_data)
     return parts_df
 
+#max-capacity-current capacity should be greater than 15 percent of max-capacity
 def find_warehouses_below_safety_stock(graph):
-    understocked_warehouses = []
+    under_threshold_warehouses = []
 
     for node, data in graph.nodes(data=True):
         if data.get("node_type") == "WAREHOUSE":
+            max_capacity = data.get("max_capacity", 0)
             current_capacity = data.get("current_capacity", 0)
-            safety_stock = data.get("safety_stock", 0)
-            if current_capacity < safety_stock: #since all are fixed to be greater
-                understocked_warehouses.append({
+            # Check if max_capacity - current_capacity is less than or equal to 15% of max_capacity
+            if max_capacity > 0 and (max_capacity - current_capacity) <= 0.15 * max_capacity:
+                under_threshold_warehouses.append({
                     "Warehouse Name": data.get("name", node),
+                    "Max Capacity": max_capacity,
                     "Current Capacity": current_capacity,
-                    "Safety Stock": safety_stock,
                     "Location": data.get("location", "Unknown"),
                 })
 
-    warehouse_df = pd.DataFrame(understocked_warehouses)
+    warehouse_df = pd.DataFrame(under_threshold_warehouses)
     return warehouse_df
 
 def find_warehouses_by_storage_cost(graph):
@@ -668,7 +670,7 @@ def find_warehouses_by_storage_cost(graph):
                 "Location": data.get("location", "Unknown"),
             })
 
-    warehouse_df = pd.DataFrame(warehouse_cost_data).sort_values(by="Total Storage Cost", ascending=False)
+    warehouse_df = pd.DataFrame(warehouse_cost_data).sort_values(by="Total Storage Cost", ascending=True)
     return warehouse_df
 
 def queries():
@@ -723,12 +725,15 @@ def queries():
             st.error("No warehouse nodes found in the graph.")
 
     elif query_option == "Find Warehouses Below Safety Stock":
-        result = find_warehouses_below_safety_stock(graph)
-        st.dataframe(result)
+        if st.button("Find Warehouses"):
+                
+            result = find_warehouses_below_safety_stock(graph)
+            st.dataframe(result)
 
     elif query_option == "Find Warehouses by Storage Cost":
-        result = find_warehouses_by_storage_cost(graph)
-        st.dataframe(result)
+        if st.button("Find Warehouses"):
+            result = find_warehouses_by_storage_cost(graph)
+            st.dataframe(result)
 
 
 def main():
