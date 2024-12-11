@@ -24,7 +24,7 @@ st.set_page_config(
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
 base_url = "http://172.17.149.236/api"
-version = "NSS_300_100" 
+version = "NSS_1000_12_Simulation" 
 
 getVersions = f"{base_url}/versions"
 getTimestamp = f"{base_url}/archive/schema/{version}"
@@ -370,6 +370,7 @@ def main():
     all_files = [os.path.join(target_path, f) for f in os.listdir(
         target_path) if os.path.isfile(os.path.join(target_path, f))]
     all_files.sort(key=lambda x: int(x.split("\\")[-1].split(".")[0]))
+    #all_files.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
 
     # Initialize TemporalGraph
     temporal_graph = TemporalGraphClass(all_files)
