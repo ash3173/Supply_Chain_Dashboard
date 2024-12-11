@@ -13,8 +13,63 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     )
 from utils import time_and_memory_streamlit,plotly_ego_graph,ego_graph_query
+def get_product_offering_ids(graph):
+
+        return [
+            node_id
+            for node_id, data in graph.nodes(data=True)
+            if data.get("node_type") == "PRODUCT_OFFERING"
+        ]
+def static_part():
+    timestamp = 2
+    
+    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
+    # if url_data.status_code != 200:
+    #     st.error("Failed to load data from the server.")
+    #     return
+    # data = url_data.json()
+    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+    
+    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+    
+    warehouse_nodes = data["node_values"]["WAREHOUSE"]
+    warehouse_data = {
+        "supplier": {},
+        "subassembly": {},
+        "lam": {}
+    }
+
+    warehouse_size = {
+        "small" : 0 ,
+        "medium" : 0,
+        "large" : 0
+    }
+
+    for warehouse in warehouse_nodes:
+        type = warehouse[2]
+        state = warehouse[3]
+        size = warehouse[4]
+
+        warehouse_size[size] += 1
+        if state not in warehouse_data[type]:
+            warehouse_data[type][state] = 0
+
+        warehouse_data[type][state] += 1
+
+    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
+
+    with col1:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        fig = create_warehouse_map(warehouse_data)
+        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
 
 
+    with col3:
+        fig = donut_chart(warehouse_size)
+        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
 def query_transportation_cost_for_supplier_and_warehouse(G, supplier_id, warehouse_id):
 
     if G.has_edge(supplier_id, warehouse_id):
@@ -616,96 +671,10 @@ def find_warehouses_by_storage_cost(graph):
     warehouse_df = pd.DataFrame(warehouse_cost_data).sort_values(by="Total Storage Cost", ascending=False)
     return warehouse_df
 
-
-
-
-def main():
-    # Adjust global Streamlit styling
-    st.markdown("""
-    <style>
-        .block-container {
-            padding-top: 1rem; /* Reduce top padding */
-            padding-bottom: 0rem;
-        }
-        .css-1v3fvcr {
-            margin-top: 0rem;
-            margin-bottom: 0rem;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-    st.title("Warehouse Dashboard")
-
-    if "temporal_graph" not in st.session_state:
-        st.error("No Temporal Graph found in the session state. Please run the main script first.")
-        return
-    
-    timestamp = 2
-    
-    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
-    # if url_data.status_code != 200:
-    #     st.error("Failed to load data from the server.")
-    #     return
-    # data = url_data.json()
-    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-    
-    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-    def get_product_offering_ids(graph):
-
-        return [
-            node_id
-            for node_id, data in graph.nodes(data=True)
-            if data.get("node_type") == "PRODUCT_OFFERING"
-        ]
-    warehouse_nodes = data["node_values"]["WAREHOUSE"]
-    warehouse_data = {
-        "supplier": {},
-        "subassembly": {},
-        "lam": {}
-    }
-
-    warehouse_size = {
-        "small" : 0 ,
-        "medium" : 0,
-        "large" : 0
-    }
-
-    for warehouse in warehouse_nodes:
-        type = warehouse[2]
-        state = warehouse[3]
-        size = warehouse[4]
-
-        warehouse_size[size] += 1
-        if state not in warehouse_data[type]:
-            warehouse_data[type][state] = 0
-
-        warehouse_data[type][state] += 1
-
-    col1, col2, col3 = st.columns([1,4,1.5], gap='medium')
-
-    with col1:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        fig = create_warehouse_map(warehouse_data)
-        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
-
-
-    with col3:
-        fig = donut_chart(warehouse_size)
-        st.plotly_chart(fig, use_container_width=True)  # Display the figure within the column
-    
-    st.divider() 
-    
-    node_details_input()
-    
-    st.text(" ")  # Adds one blank line
-    st.text(" ")  # Adds another blank line
-
-    st.divider() 
-
+def queries():
     st.title("Queries")
+    timestamp = 2
+    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
     query_option = st.selectbox("Choose Query", ["Select", "Check available units","Find Suppliers Supplying to a Warehouse",
                                                  "Find Parts in Warehouse", "Find Warehouses Below Safety Stock",
                                                  "Find Warehouses by Storage Cost"])
@@ -760,6 +729,41 @@ def main():
     elif query_option == "Find Warehouses by Storage Cost":
         result = find_warehouses_by_storage_cost(graph)
         st.dataframe(result)
+
+
+def main():
+    # Adjust global Streamlit styling
+    st.markdown("""
+    <style>
+        .block-container {
+            padding-top: 1rem; /* Reduce top padding */
+            padding-bottom: 0rem;
+        }
+        .css-1v3fvcr {
+            margin-top: 0rem;
+            margin-bottom: 0rem;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.title("Warehouse Dashboard")
+
+    if "temporal_graph" not in st.session_state:
+        st.error("No Temporal Graph found in the session state. Please run the main script first.")
+        return
+    
+    static_part()
+    
+    st.divider() 
+    
+    node_details_input()
+    
+    st.text(" ")  # Adds one blank line
+    st.text(" ")  # Adds another blank line
+
+    st.divider() 
+
+    queries()
     
 
 if __name__ == "__main__":
