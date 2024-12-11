@@ -389,33 +389,41 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
 
     return fig
 
+
 def find_product_offerings_under_threshold(data, threshold_operating_cost):
     product_offerings = []
     highest_operating_cost = 0
     highest_product_offering = None
 
     for edge in data["link_values"].get("FACILITYToPRODUCT_OFFERING", []):
-        source_id = edge[4]
-        target_id = edge[5]
+        source_id = edge[4]  # Facility ID
+        target_id = edge[5]  # Product Offering ID
 
+        # Find the corresponding facility and product offering
         facility = next((f for f in data["node_values"]["FACILITY"] if f[6] == source_id), None)
         product = next((p for p in data["node_values"]["PRODUCT_OFFERING"] if p[4] == target_id), None)
 
         if facility and product:
             operating_cost = facility[5]
 
+            # Add to list if operating cost is below the threshold
             if operating_cost <= threshold_operating_cost:
                 product_offerings.append({
-                    "facility": facility,
-                    "product_offering": product,
-                    "operating_cost": operating_cost
+                    "Facility Name": facility[1],  # Assuming index 1 is name
+                    "Facility Location": facility[3],  # Assuming index 3 is location
+                    "Product Name": product[1],  # Assuming index 1 is name
+                    "Operating Cost": operating_cost
                 })
 
+            # Update the highest operating cost and product offering
             if operating_cost > highest_operating_cost:
                 highest_operating_cost = operating_cost
                 highest_product_offering = product
 
-    return product_offerings, highest_operating_cost, highest_product_offering
+    # Convert to Pandas DataFrame for tabular output
+    offerings_df = pd.DataFrame(product_offerings)
+
+    return offerings_df, highest_operating_cost, highest_product_offering
 
 
 
@@ -554,37 +562,19 @@ def main():
                                                  ,"Facility for a product"])
 
     if query_option=="Product Offering under threshold":
-        cost_threshold = st.slider("Importance Threshold", min_value=150.0, max_value=10000.0, value=5000.00)
-        if st.button("Find product offering"):
-            product_offerings, highest_cost, highest_product = find_product_offerings_under_threshold(
-                data,
-                cost_threshold
-            )
+        cost_threshold = st.slider("Cost Threshold", min_value=150.0, max_value=10000.0, value=5000.00)
+        if st.button("Find Product Offerings"):
+            offerings_df, highest_cost, highest_product = find_product_offerings_under_threshold(data, cost_threshold)
 
-            with st.container(height=200):
+            if not offerings_df.empty:
+                st.write("**Product Offerings Under Threshold**")
+                st.dataframe(offerings_df)
 
-                if product_offerings:
-                    st.write("### Product Offerings Under Threshold")
-                    for offering in product_offerings:
-                        facility = offering["facility"]
-                        product = offering["product_offering"]
-                        cost = offering["operating_cost"]
-                        st.write(f"""
-                        Facility: {facility[1]}
-                        - Operating Cost: ${cost:.2f}
-                        - Product Offering: {product[1]}
-                        - Product ID: {product[4]}
-                        - Type: {facility[2]}
-                        """)
-
-                    st.write("### Highest Operating Cost")
-                    st.write(f"""
-                    Product Offering: {highest_product[1]}
-                    - Faciltiy Operating Cost: ${highest_cost:.2f}
-                    - Product ID: {highest_product[4]}
-                    """)
-                else:
-                    st.write(f"No product offerings found under threshold {cost_threshold}")
+                st.write("**Highest Operating Cost and Associated Product Offering:**")
+                st.write(f"Operating Cost: {highest_cost}")
+                st.write(f"Product Name: {highest_product[1]}")  # Assuming index 1 is name
+            else:
+                st.write("No product offerings found under the given threshold.")
 
     elif query_option=="Parts Present in a facility":
         if st.button("Find Facilities"):

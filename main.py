@@ -24,7 +24,8 @@ st.set_page_config(
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
 base_url = "http://172.17.149.238/api"
-version = "NSS_1000_12_Simulation" 
+# version = "NSS_1000_12_Simulation" 
+version = "NSS_300_100"
 
 getVersions = f"{base_url}/versions"
 getTimestamp = f"{base_url}/archive/schema/{version}"
@@ -394,6 +395,9 @@ def main():
 
     # st.write(base_url)
 
+    if not os.path.exists(data_folder):
+        os.makedirs(data_folder)
+
     target_path = os.path.join(data_folder, version)
     if os.path.exists(target_path) and os.path.isdir(target_path):
         pass
@@ -419,6 +423,8 @@ def main():
 
     all_files = [os.path.join(target_path, f) for f in os.listdir(
         target_path) if os.path.isfile(os.path.join(target_path, f))]
+    
+
     all_files.sort(key=lambda x: int(x.split("\\")[-1].split(".")[0]))
     #all_files.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
 
@@ -575,9 +581,18 @@ def main():
             # Handle the different cases returned by the query
             if choice == 1:
                 # st.write(f"## Inventory and Demand Status")
-                st.write(f"#### Demand of {units} units can be satisfied.")
-                st.write(f"#### Total available units of {product_id}: {math.ceil(sum(supply_chain_data[0].values()))}")
-
+                st.markdown(f"""
+                    <div style="background-color: #f0f8ff; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+                        <h3 style="color: #2a9d8f; margin-bottom: 10px;">Demand Satisfied</h3>
+                        <p style="font-size: 18px; color: #264653;">
+                            ✅ <strong>Demand:</strong> {units} units can be satisfied.
+                        </p>
+                        <p style="font-size: 18px; color: #264653;">
+                            📦 <strong>Total Available Units of {product_id}:</strong> {math.ceil(sum(supply_chain_data[0].values()))}
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+ 
                 st.write("### Warehouse Details")
                 st.write(f"Below is the breakdown of available units for **{product_id}** across warehouses:")
 
@@ -613,10 +628,22 @@ def main():
                 estimated_time = supply_chain_data[2]
 
                 # Displaying information in a structured format
-                st.write(f"### Manufacturing Summary")
-                st.write(f"**Demand cannot be fully satisfied from warehouse inventory.**")
-                st.write(f"- **Units to be manufactured:** {units_to_be_made}")
-                st.write("")
+                # st.write(f"### Manufacturing Summary")
+                # st.write(f"**Demand cannot be fully satisfied from warehouse inventory.**")
+                # st.write(f"- **Units to be manufactured:** {units_to_be_made}")
+                # st.write("")
+                st.markdown(f"""
+                    <div style="background-color: #f7faff; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h2 style="color: #0073e6; margin: 0;">Manufacturing Summary</h2>
+                        <p style="font-size: 18px; color: #333; margin: 5px 0;">
+                            <strong>Demand cannot be fully satisfied from warehouse inventory.</strong>
+                        </p>
+                        <ul style="font-size: 16px; color: #555; margin: 10px 0;">
+                            <li><strong>Units to be Manufactured:</strong> {units_to_be_made}</li>
+                        </ul>
+                    </div>
+                    """, unsafe_allow_html=True)
+
 
                 st.write(f"### Raw Materials Breakdown")
                 st.write(f"To manufacture **{units_to_be_made} units**, the following raw materials are required:")
@@ -649,8 +676,21 @@ def main():
 
 
             elif choice == 3:
-                st.write(" ## Demand cannot be satisfied as there are not enough parts to manufacture new products.")
-                st.write("### Below are the available suppliers for the required raw materials:")
+                st.markdown(f"""
+                    <div style="background-color: #ffe6e6; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <h2 style="color: #d9534f; margin: 0;">Demand Cannot Be Satisfied</h2>
+                        <p style="font-size: 18px; color: #333; margin: 5px 0;">
+                            There are not enough parts to manufacture new products.
+                        </p>
+                    </div>
+
+                    """, unsafe_allow_html=True)
+                    # <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    #     <h3 style="color: #5bc0de; margin: 0;">Available Suppliers for the Required Raw Materials:</h3>
+                    # </div>
+
+                st.write("### Available Suppliers for the Required Raw Materials")
+                
                 parts_data = supply_chain_data[0]  # Part and supplier mapping
                 supplier_data = supply_chain_data[1]  # Supplier details
 
