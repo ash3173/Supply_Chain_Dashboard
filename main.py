@@ -8,7 +8,7 @@ import glob
 import pandas as pd
 import base64
 import networkx as nx
-
+import math
 
 
 st.set_page_config(
@@ -24,7 +24,7 @@ st.set_page_config(
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
 base_url = "http://172.17.149.236/api"
-version = "NSS_300_100" 
+version = "NSS_1000_12_Simulation" 
 
 getVersions = f"{base_url}/versions"
 getTimestamp = f"{base_url}/archive/schema/{version}"
@@ -37,7 +37,7 @@ data_folder = "data"
 # Streamlit app starts here
 # main for running from server
 
-def check_units_available_in_warehouse(graph,product_id,product_id_node) :
+def check_units_available_in_warehouse(data,graph,product_id,product_id_node) :
 
     in_edges = graph.in_edges(product_id_node[0],data=True)
     available = {}
@@ -49,42 +49,61 @@ def check_units_available_in_warehouse(graph,product_id,product_id_node) :
 
             available[source] += edge_data["inventory_level"]
 
-    return available
+    all_warehouses = data["node_values"]["WAREHOUSE"]
+    warehouses = {}
+
+    # st.write(available)
+    for warehouse_data in all_warehouses :
+        # st.write(warehouse_data)
+        if warehouse_data[-1] in available :
+            name = warehouse_data[1]
+            type = warehouse_data[2]
+            location = warehouse_data[3]
+            size_category = warehouse_data[4]
+            warehouses[warehouse_data[-1]] = [name,type,location,size_category]
+
+    # st.write(warehouses)
+    return [available,warehouses]
 
 def find_facilty_making_product(graph,product_id,product_id_node) :
     in_edges = graph.in_edges(product_id_node[0],data=True)
-    facility = {}
+    facility = []
 
     for source,target,edge_data in in_edges :
         if edge_data["relationship_type"] == "FACILITYToPRODUCT_OFFERING" and target == product_id :
-            if target not in facility :
-                facility[target] = []
-
-            facility[product_id].append(source)
+            facility.append(source)
 
     return facility
 
 def find_raw_materials_to_make_product(data,facility) :
     raw_materials = {}
-    facility_to_parts = data["link_values"]["FACILITYToPARTS"]
+    facility_to_parts = data["link_values"]["PARTSToFACILITY"]
     for edge_data in facility_to_parts :
-        if edge_data[-2] == facility :
-            raw_materials[edge_data[-1]] = [edge_data[3],edge_data[1],edge_data[2]] # quantity , cost , lead time
+        # st.write(edge_data[-1],facility)
+        if edge_data[-1] in facility :      # quantity , cost , lead time
+            raw_materials[edge_data[-2]] = [edge_data[1],edge_data[3],edge_data[-3]] 
 
     return raw_materials
 
 def find_total_cost(raw_materials,needed_units) :
     for key, values in raw_materials.items():
-        raw_materials[key] = [value * needed_units for value in values]
+        raw_materials[key] = [math.ceil(value * needed_units) for value in values]
+        # st.write("multipling",raw_materials[key],needed_units)
 
     return raw_materials
 
-def calulate_cost_and_time(total) :
+def calulate_cost_and_time(data,total,facility) :
     cost = 0
     time = 0
     for key, values in total.items():
         cost += values[1]
         time += values[2]
+
+    all_facility = data["node_values"]["FACILITY"]
+
+    for facility_data in all_facility :
+        if facility_data[-1] in facility :
+            cost += facility_data[-2]
 
     return cost,time
 
@@ -94,66 +113,97 @@ def check_warehouse_have_enough_raw_material(data,raw_materials) :
     for k,v in raw_materials.items() :
         all_raw_materials[k] = v[0]
 
+
     for edge_data in warehouse :
         if edge_data[-1] in all_raw_materials :
-            all_raw_materials[edge_data[-1]] -= edge_data[3]
+            all_raw_materials[edge_data[-1]] -= edge_data[1]
 
-    for k,v in raw_materials.items() :
+    for k,v in all_raw_materials.items() :
         if v > 0 :
-            return False
+            return [False,all_raw_materials]
     
-    return True
+    return [True,all_raw_materials]
 
 # need to change
 def get_supplier_for_raw_material(data,raw_materials) :
-    return "need to change"
-    warehouses = data["link_values"]["WAREHOUSEToPARTS"]
-    warehouses_containing_raw_materials = []
+    path = "E:\LAM\Graph Server\Supply_Chain_Dashboard\suppliers_parts_data_unused.json"
+    with open(path,'r') as f : 
+        supplier_data = json.load(f)
 
-    for edge_data in warehouses :
-        if edge_data[-1] in raw_materials :
-            warehouses_containing_raw_materials.append(edge_data[-2])
+    parts_supplier = {}
+    all_needed_supplier = set()
+    for supp,parts in supplier_data.items() :
+        
+        for part in parts :
+            if part in raw_materials :
 
-    suppliers = data["link_values"]["SUPPLIERSToWAREHOUSE"]
-    suppliers_for_raw_material = []
+                if part not in parts_supplier :
+                    parts_supplier[part] = []
 
-    for edge_data in suppliers :
-        if edge_data[-2] in warehouses_containing_raw_materials :
-            suppliers_for_raw_material.append(edge_data[-1])
+                parts_supplier[part].append(supp)
+                all_needed_supplier.add(supp)
 
-    return suppliers_for_raw_material
+    all_suppliers = data["node_values"]["SUPPLIERS"]
+    supplier_details = {}
+
+    for supplier in all_suppliers :
+        if supplier[-1] in all_needed_supplier : # location reliability size size_category
+            supplier_details[supplier[-1]] = [supplier[2],supplier[3],supplier[4],supplier[5]]
+
+    return [parts_supplier,supplier_details]
+
+
+
+            
+    # warehouses = data["link_values"]["WAREHOUSEToPARTS"]
+    # warehouses_containing_raw_materials = []
+
+    # for edge_data in warehouses :
+    #     if edge_data[-1] in raw_materials :
+    #         warehouses_containing_raw_materials.append(edge_data[-2])
+
+    # suppliers = data["link_values"]["SUPPLIERSToWAREHOUSE"]
+    # suppliers_for_raw_material = []
+
+    # for edge_data in suppliers :
+    #     if edge_data[-2] in warehouses_containing_raw_materials :
+    #         suppliers_for_raw_material.append(edge_data[-1])
+
+    return raw_materials
 
 
 
 def supply_chain_query(data,graph,product_id,units,product_id_node) :
 
-    warehouse_containing_product_id = check_units_available_in_warehouse(graph,product_id,product_id_node)
+    warehouse_containing_product_id,warehouse_data = check_units_available_in_warehouse(data,graph,product_id,product_id_node)
     
     if sum(warehouse_containing_product_id.values()) >= units :
-        return [1,warehouse_containing_product_id] # 1 - Demand can be satisfied by warehouse
+        return [1,[warehouse_containing_product_id,warehouse_data]] # 1 - Demand can be satisfied by warehouse
     
     else :
 
+        # facility to parts - 
+        # parts to facility - 
+        # st.write(warehouse_containing_product_id)
+
         available_units = sum(warehouse_containing_product_id.values())
-        
         facility = find_facilty_making_product(graph,product_id,product_id_node)
-        st.write(facility)
+        # st.write("facility",facility)
 
         raw_materials = find_raw_materials_to_make_product(data,facility)
-        st.write(raw_materials)
+        # st.write("raw_materials",raw_materials)
 
         total_raw_materials = find_total_cost(raw_materials,units - available_units)
-        st.write(total_raw_materials)
 
         check,needed_raw_material = check_warehouse_have_enough_raw_material(data,total_raw_materials)
 
         if check :
-            cost,time = calulate_cost_and_time(total_raw_materials)
-            return [2,total_raw_materials,cost,time,units - available_units] # 2 - Demand can be satisfied by making new products
+            cost,time = calulate_cost_and_time(data,total_raw_materials,facility)
+            return [2,[total_raw_materials,cost,time,units - available_units]] # 2 - Demand can be satisfied by making new products
         
         else :
-            suppliers = get_supplier_for_raw_material(data,needed_raw_material)
-            return [3,suppliers] # 3 - Demand can't be satisfied as not enough parts to make new products
+            supplier_data = get_supplier_for_raw_material(data,needed_raw_material)
+            return [3,supplier_data] # 3 - Demand can't be satisfied as not enough parts to make new products
 
 
 def count_connections_and_find_max_nodes(data):
@@ -370,6 +420,7 @@ def main():
     all_files = [os.path.join(target_path, f) for f in os.listdir(
         target_path) if os.path.isfile(os.path.join(target_path, f))]
     all_files.sort(key=lambda x: int(x.split("\\")[-1].split(".")[0]))
+    #all_files.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
 
     # Initialize TemporalGraph
     temporal_graph = TemporalGraphClass(all_files)
@@ -507,14 +558,13 @@ def main():
             all_products.append(po[-1])
 
         product_id = st.selectbox("Select Product Offering",all_products)
-        units = st.number_input("Enter number of units",min_value=1000,max_value=1000000)
+        units = st.number_input("Enter number of units",min_value=1,max_value=1000000)
 
         for node in graph.nodes(data=True):
             if node[0] == product_id :
                 product_id_node = node
                 break
         
-        st.write("Product ID Node",product_id_node)
         choice = 0
         if st.button("Check Supply Chain"):
             choice, supply_chain_data = supply_chain_query(data,graph, product_id, units, product_id_node)
@@ -524,25 +574,115 @@ def main():
         if choice != 0:
             # Handle the different cases returned by the query
             if choice == 1:
-                st.write(f"Demand of {units} units can be satisfied.")
-                st.write(f"Total available units of {product_id}: {sum(supply_chain_data.values())}")
-                
-                for warehouse, available_units in supply_chain_data.items():
-                    st.write(f"Warehouse {warehouse} has {available_units} units of {product_id}.")
+                # st.write(f"## Inventory and Demand Status")
+                st.write(f"#### Demand of {units} units can be satisfied.")
+                st.write(f"#### Total available units of {product_id}: {math.ceil(sum(supply_chain_data[0].values()))}")
+
+                st.write("### Warehouse Details")
+                st.write(f"Below is the breakdown of available units for **{product_id}** across warehouses:")
+
+                # Preparing data for table display
+                warehouse_data = []
+                for warehouse, prop in supply_chain_data[1].items():
+                    warehouse_data.append({
+                        "Warehouse": warehouse,
+                        "Units Available": math.ceil(supply_chain_data[0][warehouse]),
+                        "Name": prop[0],
+                        "Type": prop[1],
+                        "Location": prop[2],
+                        "Size": prop[3]
+                    })
+
+                # Convert to DataFrame
+                warehouse_df = pd.DataFrame(warehouse_data)
+
+                # Display the table
+                st.table(warehouse_df)
 
             elif choice == 2:
+
                 # If choice is 2, display details about new product manufacturing
-                st.write(f"Demand cannot be fully satisfied from warehouse inventory. {units - sum(supply_chain_data.values())} units will be made.")
-                st.write(f"Total raw materials required: {supply_chain_data[0]}")  # Adjust based on your data format
-                st.write(f"Cost to manufacture: {supply_chain_data[1]}")  # Adjust based on your data format
-                st.write(f"Estimated time for manufacturing: {supply_chain_data[2]} hours")  # Adjust based on your data format
+                # st.write(f"Demand cannot be fully satisfied from warehouse inventory. {math.ceil(supply_chain_data[-1])} units will be made.")
+                # st.write(f"Total raw materials required to make {math.ceil(supply_chain_data[-1])} units: {supply_chain_data[0]}")  # Adjust based on your data format
+                # st.write(f"Total Cost required to manufacture : {supply_chain_data[1]}")  # Adjust based on your data format
+                # st.write(f"Estimated time for manufacturing: {supply_chain_data[2]} hours")  # Adjust based on your data format
+
+                units_to_be_made = math.ceil(supply_chain_data[-1])
+                raw_materials = supply_chain_data[0]
+                total_cost = supply_chain_data[1]
+                estimated_time = supply_chain_data[2]
+
+                # Displaying information in a structured format
+                st.write(f"### Manufacturing Summary")
+                st.write(f"**Demand cannot be fully satisfied from warehouse inventory.**")
+                st.write(f"- **Units to be manufactured:** {units_to_be_made}")
+                st.write("")
+
+                st.write(f"### Raw Materials Breakdown")
+                st.write(f"To manufacture **{units_to_be_made} units**, the following raw materials are required:")
+                # for material, values in raw_materials.items():
+                #     st.write(f"- **{material}**: Quantity: {values[0]}, Cost: {values[1]}, Time: {values[2]} hours")
+                # st.write("")
+
+                raw_materials_df = pd.DataFrame.from_dict(
+                    raw_materials, 
+                    orient="index", 
+                    columns=["Quantity", "Cost", "Time (hours)"]
+                ).reset_index().rename(columns={"index": "Material"})
+
+                # Display the table
+                st.table(raw_materials_df)
+
+
+                # st.write(f"### Manufacturing Cost and Time")
+                # Highlighting cost and time using HTML and Markdown
+                st.markdown(f"""
+                <div style="background-color: #f0f8ff; padding: 10px; border-radius: 5px;">
+                    <h3 style="color: #ff4500; margin: 0;"> 💰 Total Cost to Manufacture: ${total_cost:,.2f}</h3>
+                    <p style="font-size: 18px; color: #4682b4; margin: 0;"> ⏳ Estimated Manufacturing Time:  {estimated_time} hours</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+
+                # st.write(f"- **Total Cost to Manufacture:** ${total_cost:,.2f}")
+                # st.write(f"- **Estimated Manufacturing Time:** {estimated_time} hours")
+
 
             elif choice == 3:
-                # If choice is 3, show suppliers for the raw materials
-                st.write(f"Demand cannot be satisfied as there are not enough parts to make new products.")
-                st.write("Available Suppliers for the required raw materials:")
-                for supplier in supply_chain_data:
-                    st.write(supplier)  # Adjust based on your data structure
+                st.write(" ## Demand cannot be satisfied as there are not enough parts to manufacture new products.")
+                st.write("### Below are the available suppliers for the required raw materials:")
+                parts_data = supply_chain_data[0]  # Part and supplier mapping
+                supplier_data = supply_chain_data[1]  # Supplier details
+
+                # Process and display suppliers for each part
+                for part, suppliers in parts_data.items():
+                    part_table_data = []
+
+                    for supplier in suppliers:
+                        if supplier in supplier_data:  # Check if supplier data is available
+                            supplier_details = supplier_data[supplier]
+                            part_table_data.append({
+                                "Supplier": supplier,
+                                "Location": supplier_details[0],
+                                "Reliability (%)": f"{supplier_details[1] * 100:.2f}",
+                                "Capacity": supplier_details[2],
+                                "Size": supplier_details[3].capitalize()  # Capitalize size for consistent display
+                            })
+
+                    # Display supplier table if data exists
+                    if part_table_data:
+                        st.write(f"### Part: {part}")
+                        st.write(f"Available suppliers for **{part}** are listed below:")
+                        part_df = pd.DataFrame(part_table_data)
+                        st.table(part_df)
+
+                # Show a message if no data is available
+                if not any(supplier in supplier_data for suppliers in parts_data.values() for supplier in suppliers):
+                    st.write("No supplier data is available for the required raw materials.")
+
+                # for supplier in supply_chain_data:
+                #     st.write(supplier)  # Adjust based on your data structure
+
 
         
 if __name__ == "__main__":

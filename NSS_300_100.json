@@ -37,7 +37,7 @@
       "max_capacity",
       "operating_cost",
       "id"
-    ],
+    ],  
     "PARTS": [
       "node_type",
       "name",
