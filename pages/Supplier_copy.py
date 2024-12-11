@@ -53,18 +53,6 @@ def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_i
 
 @time_and_memory_streamlit
 def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost):
-    """
-    Analyze supplier reliability and transportation costs at a specific timestamp in a temporal graph.
-
-    Parameters:
-        graph (Graph): The temporal graph object for the specified timestamp.
-        timestamp (int): The specific timestamp to analyze.
-        reliability_threshold (float): The minimum acceptable reliability threshold for suppliers.
-        max_transportation_cost (float): The maximum acceptable transportation cost.
-
-    Returns:
-        list: A list of suppliers meeting the criteria, including supplier ID, reliability, and transportation cost.
-    """
     suppliers = []
 
     # Iterate through edges and check if they belong to SUPPLIERSToWAREHOUSE relationship
@@ -81,6 +69,92 @@ def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshol
                     suppliers.append((u, reliability, transportation_cost))
 
     return suppliers
+
+# given a part type return the suppliers who can supply that part type
+@time_and_memory_streamlit
+def find_suppliers_by_part_type(graph, part_type):
+    suppliers = []
+
+    for node, data in graph.nodes(data=True):
+        if data.get("node_type") == "SUPPLIERS":
+            supplied_part_types = data.get("supplied_part_types", [])
+            if part_type in supplied_part_types:
+                suppliers.append({
+                    "Supplier Name": data.get("name", node),
+                    "Location": data.get("location", "Unknown"),
+                    "Reliability": data.get("reliability", "Unknown"),
+                    "Size": data.get("size", "Unknown"),
+                })
+
+    # Convert the list to a Pandas DataFrame for easier visualization
+    suppliers_df = pd.DataFrame(suppliers)
+    return suppliers_df
+
+@time_and_memory_streamlit
+def find_unused_suppliers(graph):
+    unused_suppliers = []
+
+    for node, data in graph.nodes(data=True):
+        if data.get("node_type") == "SUPPLIERS":
+            # Check if the supplier has no edges (in-degree and out-degree are 0)
+            if graph.degree(node) == 0:
+                unused_suppliers.append({
+                    "Supplier Name": data.get("name", node),
+                    "Location": data.get("location", "Unknown"),
+                    "Reliability": data.get("reliability", "Unknown"),
+                    "Supplied Part Types": ", ".join(data.get("supplied_part_types", [])) if data.get("supplied_part_types") else "None"
+                })
+
+    # Convert to a DataFrame for better readability
+    unused_suppliers_df = pd.DataFrame(unused_suppliers)
+
+    if unused_suppliers_df.empty:
+        return "No unused suppliers found in the graph."
+    else:
+        return unused_suppliers_df
+
+@time_and_memory_streamlit
+def find_supplier_product_association(graph):
+    supplier_product_mapping = []
+
+    for node, data in graph.nodes(data=True):
+        if data.get("node_type") == "SUPPLIERS":
+            supplier_name = data.get("name", node)
+            supplied_parts = set()
+
+            # Traverse outgoing edges to identify supplied parts
+            for _, target, edge_data in graph.out_edges(node, data=True):
+                if edge_data["relationship_type"] == "SUPPLIERSToWAREHOUSE":
+                    warehouse_id = target
+                    
+                    # Traverse warehouse's outgoing edges to find parts
+                    for _, part_target, wh_edge_data in graph.out_edges(warehouse_id, data=True):
+                        if wh_edge_data["relationship_type"] == "WAREHOUSEToPARTS":
+                            supplied_parts.add(part_target)
+
+            # For each supplied part, find associated product offerings
+            associated_products = set()
+            for part_id in supplied_parts:
+                for _, product_target, edge_data in graph.out_edges(part_id, data=True):
+                    if edge_data["relationship_type"] == "PARTSToFACILITY":
+                        facility_id = product_target
+
+                        # Traverse facility's outgoing edges to product offerings
+                        for _, offering_target, fac_edge_data in graph.out_edges(facility_id, data=True):
+                            if fac_edge_data["relationship_type"] == "FACILITYToPRODUCT_OFFERING":
+                                associated_products.add(offering_target)
+
+            # Prepare the result
+            supplier_product_mapping.append({
+                "Supplier Name": supplier_name,
+                "Associated Products": ", ".join(associated_products) if associated_products else "None"
+            })
+
+    # Convert to a DataFrame for better readability
+    supplier_product_df = pd.DataFrame(supplier_product_mapping)
+
+    return supplier_product_df
+
 
 # @st.fragment
 # def node_details_input(supplier_data):
@@ -292,7 +366,7 @@ def node_details(node_index, sup_id,timestamp):
 #                 st.plotly_chart(fig)  # Display the figure in Streamlit
 
 @st.fragment
-def queries():
+def queries(): 
     col1, col2=st.columns([2,1])
     with col1:
         timestamp=1
@@ -300,34 +374,67 @@ def queries():
         # Heading for the Supplier ID Info
         st.write("### Queries based on Suppliers")
 
-        query_type = st.selectbox("Choose Query", ["Select","Supplier Reliability and Costing Analysis", "Given a Supplier ID and Warehouse ID get lead time."])
+        query_type = st.selectbox("Choose Query", ["Select","Supplier Reliability and Costing Analysis", "Given a Supplier ID and Warehouse ID get lead time."
+                                                   ,"Find Suppliers by Part Type"
+                                                   ,"Find Unused Suppliers"
+                                                   ,"Supplier-Product Offering Association"])
 
         if query_type == "Supplier Reliability and Costing Analysis":
-            st.info("Suppliers with high reliability and low transportation cost")
             reliability_threshold = st.slider("Reliability Threshold", min_value=0.0, max_value=1.0, value=0.95, step=0.01)
             max_transportation_cost = st.number_input("Max Transportation Cost", min_value=0.0, value=50.0, step=0.1)
+                
+            if st.button("Get Suppliers"):
+                # st.info("Suppliers with high reliability and low transportation cost")
+                
+                results = supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost)
+                
+                with st.container(height=300):
             
-            results = supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost)
-            
-            with st.container(height=300):
-        
-                if results:
-                    st.write("### Suppliers meeting the criteria:")
-                    for supplier in results:
-                        st.write(f"Supplier ID: {supplier[0]}, Reliability: {supplier[1]:.2f}, Transportation Cost: {supplier[2]:.2f}")
-                else:
-                    st.write("No suppliers meet the specified criteria.")
+                    if results:
+                        st.write("### Suppliers meeting the criteria:")
+                        for supplier in results:
+                            st.write(f"Supplier ID: {supplier[0]}, Reliability: {supplier[1]:.2f}, Transportation Cost: {supplier[2]:.2f}")
+                    else:
+                        st.write("No suppliers meet the specified criteria.")
 
         elif query_type=="Given a Supplier ID and Warehouse ID get lead time.":
             supplier_id = st.text_input("Enter Supplier ID", "S_003")
             warehouse_id = st.text_input("Enter Warehouse ID", "W_143")
+            if st.button("Find Lead Time"):
+                lead_time = query_lead_time_supplier_to_warehouse(graph, timestamp, supplier_id, warehouse_id)
 
-            lead_time = query_lead_time_supplier_to_warehouse(graph, timestamp, supplier_id, warehouse_id)
+                if lead_time is not None:
+                    st.success(f"Lead time between Supplier {supplier_id} and Warehouse {warehouse_id}: {lead_time}")
+                else:
+                    st.error(f"No relationship or lead time data found between Supplier {supplier_id} and Warehouse {warehouse_id}.")
 
-            if lead_time is not None:
-                st.success(f"Lead time between Supplier {supplier_id} and Warehouse {warehouse_id}: {lead_time}")
-            else:
-                st.error(f"No relationship or lead time data found between Supplier {supplier_id} and Warehouse {warehouse_id}.")
+        elif query_type == "Find Suppliers by Part Type":
+            part_types = list({ptype for node, data in graph.nodes(data=True) 
+                            if data.get("node_type") == "SUPPLIERS" 
+                            for ptype in data.get("supplied_part_types", [])})
+
+            selected_part_type = st.selectbox("Select a Part Type:", part_types)
+
+            if st.button("Find Suppliers"):
+                result = find_suppliers_by_part_type(graph, selected_part_type)
+                st.write(result)
+
+        elif query_type == "Find Unused Suppliers":
+            if st.button("Find Unused Suppliers"):
+                result = find_unused_suppliers(graph)
+                if isinstance(result, pd.DataFrame):
+                    st.dataframe(result)
+                else:
+                    st.write(result)
+
+        elif query_type == "Supplier-Product Offering Association":
+            if st.button("Associated products"):
+                result = find_supplier_product_association(graph)
+                if isinstance(result, pd.DataFrame):
+                    st.dataframe(result)
+                else:
+                    st.write(result)
+
 
 def get_visualization(data):
     supplier_data = data["node_values"]["SUPPLIERS"]

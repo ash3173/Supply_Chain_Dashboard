@@ -3,10 +3,13 @@ import requests
 import plotly.graph_objects as go
 import plotly.express as px
 import pandas as pd
+import time
+import tracemalloc
+import functools
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import networkx as nx
-from utils import time_and_memory_streamlit, plotly_ego_graph, ego_graph_query
+from utils import time_and_memory_streamlit,ego_graph_query,plotly_ego_graph
 
 st.set_page_config(
     layout="wide",
@@ -348,7 +351,6 @@ def node_details(facility_data, facility_id):
                 st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
-
 def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, identifier2):
     # Create a figure with two vertically stacked subplots
     fig, axs = plt.subplots(2, 1, figsize=(2, 3), facecolor='none')  # Reduced height
@@ -387,6 +389,90 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
 
     return fig
 
+def find_product_offerings_under_threshold(data, threshold_operating_cost):
+    product_offerings = []
+    highest_operating_cost = 0
+    highest_product_offering = None
+
+    for edge in data["link_values"].get("FACILITYToPRODUCT_OFFERING", []):
+        source_id = edge[4]
+        target_id = edge[5]
+
+        facility = next((f for f in data["node_values"]["FACILITY"] if f[6] == source_id), None)
+        product = next((p for p in data["node_values"]["PRODUCT_OFFERING"] if p[4] == target_id), None)
+
+        if facility and product:
+            operating_cost = facility[5]
+
+            if operating_cost <= threshold_operating_cost:
+                product_offerings.append({
+                    "facility": facility,
+                    "product_offering": product,
+                    "operating_cost": operating_cost
+                })
+
+            if operating_cost > highest_operating_cost:
+                highest_operating_cost = operating_cost
+                highest_product_offering = product
+
+    return product_offerings, highest_operating_cost, highest_product_offering
+
+
+
+def find_all_parts_required_in_facility(data):
+    facility_to_parts = data["link_values"]["PARTSToFACILITY"]
+    facility = {}
+
+    # Collect parts required for each facility
+    for edge_data in facility_to_parts:
+        if edge_data[-1] not in facility:
+            facility[edge_data[-1]] = []
+
+        facility[edge_data[-1]].append(edge_data[-2])
+
+    # Prepare data for the table
+    table_data = []
+    for facility_name, parts in facility.items():
+        parts_list = ", ".join(parts)
+        table_data.append([facility_name, parts_list])
+
+    # Create a DataFrame from the table data (optional: if you prefer using pandas)
+    import pandas as pd
+    df = pd.DataFrame(table_data, columns=["Facility", "Parts"])
+
+    # Display the table using Streamlit
+    st.table(df)
+
+    # Optionally return the dataframe if you need it for further processing
+    return df
+
+
+
+
+def find_facilty_making_product(graph, product_id):
+    for node in graph.nodes(data=True):
+        if node[0] == product_id:
+            product_id_node = node
+            break
+    in_edges = graph.in_edges(product_id_node[0], data=True)
+    facility = {}
+
+    for source, target, edge_data in in_edges:
+        if edge_data["relationship_type"] == "FACILITYToPRODUCT_OFFERING" and target == product_id:
+            if target not in facility:
+                facility[target] = []
+
+            facility[target].append(source)
+
+    if facility:
+        facility_list = ", ".join(facility[product_id])
+        return f"The facilities making the product with ID '{product_id}' are: {facility_list}."
+    else:
+        return f"No facilities found making the product with ID '{product_id}'."
+
+
+
+
 def main():
     st.markdown("""
     <style>
@@ -423,6 +509,11 @@ def main():
         return
     
     timestamp=1
+    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
+    # if url_data.status_code != 200:
+    #     st.error("Failed to load data from the server.")
+    #     return
+    # data = url_data.json()
     data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
 
     graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
@@ -447,6 +538,79 @@ def main():
     st.text(" ")  # Adds another blank line
 
     st.divider()  # Adds a horizontal divider (thin line), visually separating sections
+    def get_product_offering_ids(graph):
+
+        return [
+            node_id
+            for node_id, data in graph.nodes(data=True)
+            if data.get("node_type") == "PRODUCT_OFFERING"
+        ]
+    st.title("Queries")
+
+    timestamp = 3
     
+    query_option = st.selectbox("Choose Query", ["Select", "Product Offering under threshold",
+                                                 "Parts Present in a facility"
+                                                 ,"Facility for a product"])
+
+    if query_option=="Product Offering under threshold":
+        cost_threshold = st.slider("Importance Threshold", min_value=150.0, max_value=10000.0, value=5000.00)
+        if st.button("Find product offering"):
+            product_offerings, highest_cost, highest_product = find_product_offerings_under_threshold(
+                data,
+                cost_threshold
+            )
+
+            with st.container(height=200):
+
+                if product_offerings:
+                    st.write("### Product Offerings Under Threshold")
+                    for offering in product_offerings:
+                        facility = offering["facility"]
+                        product = offering["product_offering"]
+                        cost = offering["operating_cost"]
+                        st.write(f"""
+                        Facility: {facility[1]}
+                        - Operating Cost: ${cost:.2f}
+                        - Product Offering: {product[1]}
+                        - Product ID: {product[4]}
+                        - Type: {facility[2]}
+                        """)
+
+                    st.write("### Highest Operating Cost")
+                    st.write(f"""
+                    Product Offering: {highest_product[1]}
+                    - Faciltiy Operating Cost: ${highest_cost:.2f}
+                    - Product ID: {highest_product[4]}
+                    """)
+                else:
+                    st.write(f"No product offerings found under threshold {cost_threshold}")
+
+    elif query_option=="Parts Present in a facility":
+        if st.button("Find Facilities"):
+            facility_parts_df = find_all_parts_required_in_facility(data)
+            # if not facility_parts_df.empty:
+            #     st.table(facility_parts_df)
+            # else:
+            #     st.warning(f"No facilities found at Timestamp {timestamp}.")
+            # # with st.container(height=300):
+            # st.write(facility_parts_df)
+
+    elif query_option=="Facility for a product":
+        po_ids = get_product_offering_ids(graph)
+        if po_ids:
+            po_ids = st.selectbox(
+                "Select PRODUCT OFFERING ID",
+                options=po_ids,
+                format_func=lambda x: f"{x}",
+            )
+        else:
+            st.warning("No Product Offering IDs available for the selected timestamp.")
+            return
+        if st.button("Find Facilities"):
+            facility_for_prod= find_facilty_making_product(graph,po_ids)
+            st.success(facility_for_prod)
+
+    st.divider()
 if __name__ == "__main__":
     main()

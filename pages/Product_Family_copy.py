@@ -16,57 +16,63 @@ st.set_page_config(
 
 def static_part():
     totalTimeStamps=len(st.session_state.temporal_graph.files)
-
+    highest_quarterly_revenue = [0, 0, 0, 0]
+    percent_revenue = [0, 0, 0, 0]
+    highest_quarterly_revenue_product_group = ["", "", "", ""]
+    q1,q2={},{}
+    q3,q4={},{}
     revenue_of_product_offering_across_time = {}
-
+    pf_data={"PF_001":"Kyo","PF_002":"Coronus","PF_003":"Flex","PF_004":"Versys Metal"}
+    
     for time in range(totalTimeStamps) :
 
-        # url_data = requests.get(st.session_state.temporal_graph.files[time])
-        # if url_data.status_code != 200:
-        #     st.error("Failed to load data from the server.")
-        #     return
-        # data = url_data.json()
-        data = st.session_state.temporal_graph.load_json_at_timestamp(time)
+        product_index=st.session_state.temporal_graph.create_node_type_index(time)["PRODUCT_FAMILY"]
+        
+        for key,value in product_index.items():
+            if time % 12 in [0,1,2]:
+                if pf_data[key] not in q1:
+                    q1[pf_data[key]] = 0
+                q1[pf_data[key]]+=value[-2]
 
+            elif time % 12 in [3,4,5]:
+                if pf_data[key] not in q2:
+                    q2[pf_data[key]] = 0
+                q2[pf_data[key]]+=value[-2]
+            
+            elif time % 12 in [6,7,8]:
+                if pf_data[key] not in q3:
+                    q3[pf_data[key]] = 0
+                q3[pf_data[key]]+=value[-2]
+            
+            else:
+                if pf_data[key] not in q4:
+                    q4[pf_data[key]] = 0
+                q4[pf_data[key]]+=value[-2]
+    
+    highest_quarterly_revenue_product_group[0]=max(q1, key=lambda x:q1[x])
+    highest_quarterly_revenue[0] = round(q1[highest_quarterly_revenue_product_group[0]], 3)
+    percent_revenue[0]=round((highest_quarterly_revenue[0]/sum(q1.values()))*100,3)
+    
 
-        PRODUCT_FAMILY = data["node_values"]["PRODUCT_FAMILY"]
+    highest_quarterly_revenue_product_group[1]=max(q2, key=lambda x:q2[x])
+    highest_quarterly_revenue[1] = round(q2[highest_quarterly_revenue_product_group[0]], 3)
+    percent_revenue[1]=round((highest_quarterly_revenue[1]/sum(q2.values()))*100,3)
+    
+    highest_quarterly_revenue_product_group[2]=max(q3, key=lambda x:q3[x])
+    highest_quarterly_revenue[2] = round(q3[highest_quarterly_revenue_product_group[0]], 3)
+    percent_revenue[2]=round((highest_quarterly_revenue[2]/sum(q3.values()))*100,3)
 
-        for i in range(len(PRODUCT_FAMILY)) :
-            if PRODUCT_FAMILY[i][1] not in revenue_of_product_offering_across_time :
-                revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]] = []
-
-            revenue_of_product_offering_across_time[PRODUCT_FAMILY[i][1]].append(PRODUCT_FAMILY[i][-2])
-
-    highest_quarterly_revenue = [0] * len(revenue_of_product_offering_across_time)
-    highest_quarterly_revenue_product_group = [""] * len(revenue_of_product_offering_across_time)
-
-    for k,v in revenue_of_product_offering_across_time.items() :
-        s1 = sum(v[:3]) / 3
-        s2 = sum(v[3:6]) / 3
-        s3 = sum(v[6:9]) / 3
-        s4 = sum(v[9:]) / 3
-
-        if s1 > highest_quarterly_revenue[0] :
-            highest_quarterly_revenue[0] = s1
-            highest_quarterly_revenue_product_group[0] = k
-
-        if s2 > highest_quarterly_revenue[1] :
-            highest_quarterly_revenue[1] = s2
-            highest_quarterly_revenue_product_group[1] = k
-
-        if s3 > highest_quarterly_revenue[2] :
-            highest_quarterly_revenue[2] = s3
-            highest_quarterly_revenue_product_group[2] = k
-
-        if s4 > highest_quarterly_revenue[3] :
-            highest_quarterly_revenue[3] = s4
-            highest_quarterly_revenue_product_group[3] = k
+    highest_quarterly_revenue_product_group[3]=max(q4, key=lambda x:q4[x])
+    highest_quarterly_revenue[3] = round(q4[highest_quarterly_revenue_product_group[0]], 3)
+    percent_revenue[3]=round((highest_quarterly_revenue[3]/sum(q4.values()))*100,3)
+    
+    
 
     cols = st.columns(4)
 
-    for i in range(len(highest_quarterly_revenue)) :
+    for i in range(4) :
         revenue, identifier = highest_quarterly_revenue[i], highest_quarterly_revenue_product_group[i]
-        fig = plot_higest_revenue(revenue, identifier, i+1)
+        fig = plot_higest_revenue(revenue, identifier, i+1,percent_revenue[i])
         with cols[i]:
             st.pyplot(fig)
     cols=st.columns([1,3])
@@ -414,7 +420,7 @@ def node_details(node_index, product_family_id,timestamp):
 
 
 
-def plot_higest_revenue(revenue, identifier,q):
+def plot_higest_revenue(revenue, identifier,q,percent_revenue):
 
     fig, ax = plt.subplots(figsize=(4, 4), facecolor='none')
     ax.set_xlim(-1, 1)
@@ -434,7 +440,12 @@ def plot_higest_revenue(revenue, identifier,q):
     )
 
     ax.text(
-        0, -0.4, f"Quarter : {q}", 
+        0, -0.4, f"Percentage Revenue : {percent_revenue}", 
+        fontsize=12, ha='center', va='center', color='white', style='italic', weight='bold'
+    )
+
+    ax.text(
+        0, -0.6, f"Fiscal Quarter : {q}", 
         fontsize=12, ha='center', va='center', color='white', style='italic', weight='bold'
     )    
     
