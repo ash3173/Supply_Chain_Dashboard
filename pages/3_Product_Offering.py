@@ -15,10 +15,10 @@ from utils import (
     time_and_memory_streamlit,
 )
 
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
+# st.set_page_config(
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+#     )
 
 
 def static_part():

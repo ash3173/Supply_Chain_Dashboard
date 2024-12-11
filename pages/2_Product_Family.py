@@ -9,10 +9,10 @@ import networkx as nx
 
 from utils import time_and_memory_streamlit, plotly_ego_graph, ego_graph_query
 
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
+# st.set_page_config(
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+#     )
 
 @st.fragment
 def static_part():

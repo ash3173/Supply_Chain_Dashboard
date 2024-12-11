@@ -11,10 +11,10 @@ from matplotlib.patches import Circle
 import networkx as nx
 from utils import time_and_memory_streamlit,ego_graph_query,plotly_ego_graph
 
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
+# st.set_page_config(
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+#     )
 
 def create_graph():
     # Define node attributes

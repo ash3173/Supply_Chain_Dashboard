@@ -8,10 +8,10 @@ import networkx as nx
 import time
 import tracemalloc
 import functools
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
+# st.set_page_config(
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+#     )
 from utils import time_and_memory_streamlit,plotly_ego_graph,ego_graph_query
 def get_product_offering_ids(graph):
 
