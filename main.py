@@ -127,7 +127,7 @@ def check_warehouse_have_enough_raw_material(data,raw_materials) :
 
 # need to change
 def get_supplier_for_raw_material(data,raw_materials) :
-    path = "E:\LAM\Graph Server\Supply_Chain_Dashboard\suppliers_parts_data_unused.json"
+    path = "suppliers_parts_data_unused.json"
     with open(path,'r') as f : 
         supplier_data = json.load(f)
 
