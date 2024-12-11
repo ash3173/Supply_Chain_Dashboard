@@ -11,10 +11,10 @@ import time
 import tracemalloc
 import functools
 
-st.set_page_config(
-    layout="wide",
-    initial_sidebar_state="expanded",
-    )
+# st.set_page_config(
+#     layout="wide",
+#     initial_sidebar_state="expanded",
+#     )
 
 def time_and_memory_streamlit(func):
     @functools.wraps(func)
