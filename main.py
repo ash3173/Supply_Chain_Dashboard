@@ -23,10 +23,12 @@ st.set_page_config(
 # getdata = f"{base_url}/archive/schema/{version}"
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
-base_url = "http://172.17.149.238/api"
-# base_url = "https://viable-informally-alpaca.ngrok-free.app/api/"
+# base_url = "http://172.17.149.238/api"
+base_url = "https://viable-informally-alpaca.ngrok-free.app/api"
 # version = "NSS_1000_12_Simulation" 
-version = "Lam_1000_12_no_uic"
+version = "lam_1000_12_v1"
+# version = "simulation_exports_10000_50"
+# version = "simulation_check"z
 
 end_point_for_supplier = base_url
 
@@ -439,6 +441,9 @@ def main():
                 timestamp_data = data.json()
                 with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
                     json.dump(timestamp_data, f, indent=4)
+            else:
+                st.write("Error in downloading the data")
+                break
 
     all_files = [os.path.join(target_path, f) for f in os.listdir(
         target_path) if os.path.isfile(os.path.join(target_path, f))]

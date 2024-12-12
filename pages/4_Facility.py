@@ -515,15 +515,16 @@ def queries():
         timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
     with cols1:
         
-        query_option = st.selectbox("Choose Query", ["Select", "Product Offering under threshold",
+        query_option = st.selectbox("Choose Query", ["Select", 
+                                                     "Facility with operting cost within a threshold",
                                                     "Parts Present in a facility"
-                                                    ,"Facility for a product"])
+                                                    ,"Facility manufacturing a specfic product"])
 
         if query_option=="Product Offering under threshold":
 
             
             data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-            cost_threshold = st.slider("Cost Threshold", min_value=150.0, max_value=10000.0, value=5000.00)
+            cost_threshold = st.slider("Cost Threshold", min_value=0.0, max_value=10000.0, value=5000.00)
             if st.button("Find Product Offerings"):
                 offerings_df, highest_cost, highest_product = find_product_offerings_under_threshold(data, cost_threshold)
 

@@ -475,11 +475,13 @@ def check_units_available_in_warehouse(graph, product_id):
         warehouse_info = []
         for warehouse, inventory in available.items():
             warehouse_info.append(f"{warehouse}: {round(inventory)} units")
-        warehouse_list = ", ".join(warehouse_info)
-        return f"The following warehouses have the product with ID '{product_id}' available: {warehouse_list}."
+        warehouse_list = pd.DataFrame([{'Warehouse': w.split(': ')[0], 'Units': int(w.split(': ')[1].replace(' units', ''))} for w in warehouse_info])
+        st.write(f"The following warehouses have the product with ID '{product_id}' available:")
+        st.table(warehouse_list)
+        return
     else:
-        return f"No warehouses found with the product with ID '{product_id}'."
-
+        st.write(f"No warehouses found with the product with ID '{product_id}'.")
+        return
 @time_and_memory_streamlit
 def find_suppliers_to_warehouse_table(graph, warehouse_id):
     supplier_data = []
@@ -582,7 +584,8 @@ def queries():
         timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
     with cols1:
         query_option = st.selectbox("Choose Query", ["Select", "Check available units","Find Suppliers Supplying to a Warehouse",
-                                                    "Find Parts in Warehouse", "Find Warehouses Below Safety Stock",
+                                                    "Find Parts in Warehouse", 
+                                                    # "Find Warehouses Below Safety Stock",
                                                     "Find Warehouses by Storage Cost"])
         if query_option=="Check available units":
         
@@ -599,7 +602,7 @@ def queries():
             if st.button("Check Availability"):
                 graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
                 avail=check_units_available_in_warehouse(graph, po_ids)
-                st.success(avail)
+                # st.success(avail)
         
         elif query_option == "Find Suppliers Supplying to a Warehouse":
             warehouse_ids = st.session_state.temporal_graph.create_node_type_index(0)["WAREHOUSE"]
