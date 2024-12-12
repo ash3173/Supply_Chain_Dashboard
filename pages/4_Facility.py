@@ -450,6 +450,7 @@ def find_product_offerings_under_threshold(data, threshold_operating_cost):
 
     # Convert to Pandas DataFrame for tabular output
     offerings_df = pd.DataFrame(product_offerings)
+    offerings_df = offerings_df.sort_values(by='Operating Cost', ascending=False)
 
     return offerings_df, highest_operating_cost, highest_product_offering
 
@@ -520,11 +521,11 @@ def queries():
                                                     "Parts Present in a facility"
                                                     ,"Facility manufacturing a specfic product"])
 
-        if query_option=="Product Offering under threshold":
+        if query_option=="Facility with operting cost within a threshold":
 
             
             data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
-            cost_threshold = st.slider("Cost Threshold", min_value=0.0, max_value=10000.0, value=5000.00)
+            cost_threshold = st.slider("Cost Threshold", min_value=0, max_value=300, value=150)
             if st.button("Find Product Offerings"):
                 offerings_df, highest_cost, highest_product = find_product_offerings_under_threshold(data, cost_threshold)
 
@@ -550,7 +551,7 @@ def queries():
                 # # with st.container(height=300):
                 # st.write(facility_parts_df)
 
-        elif query_option=="Facility for a product":
+        elif query_option=="Facility manufacturing a specfic product":
             po_ids = st.session_state.temporal_graph.create_node_type_index(0)["PRODUCT_OFFERING"]
             if po_ids:
                 po_ids = st.selectbox(
