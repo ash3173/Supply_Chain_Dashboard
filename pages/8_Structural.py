@@ -425,13 +425,13 @@ def main():
                 st.warning(f"No edges found for Node {node_id}.")
     
     elif query_type == "Shortest Path":
-        # source_node = st.text_input("Enter Source Node ID", "BG_001")
-        # destination_node = st.text_input("Enter Destination Node ID", "BG_010")
+        source_node = st.text_input("Enter Source Node ID", "BG_001")
+        destination_node = st.text_input("Enter Destination Node ID", "BG_010")
 
 
         if st.button("Find Shortest Path"):
-            source_node = st.selectbox("Select Node ID to Retrieve Edge Attributes", all_nodes)
-            destination_node = st.selectbox("Select Node ID to Retrieve Edge Attributes", all_nodes)
+            # source_node = st.selectbox("Select Node ID to Retrieve Edge Attributes", all_nodes)
+            # destination_node = st.selectbox("Select Node ID to Retrieve Edge Attributes", all_nodes)
             if source_node and destination_node:
                 path, length, fig = find_shortest_path(graph, source_node, destination_node)
                 if path and length:
@@ -448,7 +448,7 @@ def main():
                 st.error("Please enter valid source and destination nodes.")
     
     elif query_type == "Ancestors and Descendants":
-        node_id = st.text_input("Enter Node ID to Retrieve Ancestors and Descendants", "BG_001")
+        node_id = st.selectbox("Enter Node ID to Retrieve Ancestors and Descendants", all_nodes)
         if node_id:
             try:
                 if node_id not in graph.nodes:
