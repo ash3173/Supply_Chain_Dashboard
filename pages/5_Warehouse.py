@@ -190,22 +190,6 @@ def create_graph():
 
     return fig
 
-# @st.fragment
-# def node_details_input(warehouse_nodes):
-#     col1,col2=st.columns([2,1])
-#     with col1:
-#         # Heading for the Business Group Info
-#         st.write("### Warehouse Information Viewer")
-#         all_warehouses = ["Select Warehouse"]
-#         for warehouse in warehouse_nodes:
-#             all_warehouses.append(warehouse[-1])
-
-
-#         warehouse_id = st.selectbox("Choose Business Id",all_warehouses)
-    
-#     if warehouse_id!="Select Warehouse":
-#         node_details(warehouse_nodes, warehouse_id)
-
 
 @st.fragment
 def node_details_input():
@@ -308,94 +292,6 @@ def node_details(node_index, war_id,timestamp):
             st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
-# @st.fragment
-# @time_and_memory_streamlit
-# def node_details(warehouse_nodes, warehouse_id):
-#     col1, col2 = st.columns(2)
-#     with col1:
-#         # Heading for the Warehouse Info
-#         st.write("### Warehouse Info")
-
-#         attributes = [
-#             ("Node Type", "🏗"),
-#             ("Name", "📛"),
-#             ("Type", "⚙"),
-#             ("Location", "📍"),
-#             ("Size Category", "📏"),
-#             ("Max Capacity", "🔢"),
-#             ("Current Capacity", "📦"),
-#             ("Safety Stock", "🛡"),
-#             ("Max Parts", "🔧"),
-#             ("ID", "🆔")
-#         ]
-
-#         # Style for the no-border table
-#         st.markdown("""
-#             <style>
-#                 .warehouse-table {
-#                     width: 100%;
-#                     margin-top: 20px;
-#                     border-collapse: collapse;
-#                     font-size: 16px;
-#                     font-family: Arial, sans-serif;
-#                 }
-#                 .warehouse-table td {
-#                     padding: 8px 12px;
-#                 }
-#                 .warehouse-table td:first-child {
-#                     font-weight: bold;
-#                     color: #0d47a1; /* Blue color for attribute labels */
-#                     width: 40%;
-#                     text-align: left;
-#                 }
-#                 .warehouse-table td:last-child {
-#                     color: #2596be; /* Gray color for attribute values */
-#                     width: 60%;
-#                     text-align: left;
-#                 }
-#             </style>
-#         """, unsafe_allow_html=True)
-
-#         found = False
-
-#         # Loop through warehouse data to find matching Warehouse ID and display details
-#         for val in warehouse_nodes:  # Replace with your actual warehouse data source
-#             if warehouse_id and warehouse_id in val:
-#                 found = True
-
-#                 # Create a no-border table for displaying attributes and values
-#                 table_rows = ""
-#                 for attr, icon in attributes:
-#                     # Extract values dynamically based on attributes
-#                     table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-#                 # Display the table
-#                 st.markdown(
-#                     f"""
-#                     <table class="warehouse-table">
-#                         {table_rows}
-#                     </table>
-#                     """,
-#                     unsafe_allow_html=True
-#                 )
-
-#         if not found:
-#             st.warning('Enter a valid Warehouse ID')
-#     with col2:
-#         if found:
-#             graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-#             ego_graph = ego_graph_query(graph, warehouse_id, 1)
-#             if ego_graph:
-#                 st.write(f"### Neighbors for {warehouse_id}")
-#                 # st.write(f"Ego Graph for Node: {supplier_id}")
-#                 # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-#                 # Visualize and render the ego graph with Plotly
-#                 fig = plotly_ego_graph(ego_graph)
-#                 st.plotly_chart(fig)  # Display the figure in Streamlit
-
-
-
 
 def donut_chart(data, title="Warehouse-size Distribution"):
 
@@ -432,7 +328,7 @@ def donut_chart(data, title="Warehouse-size Distribution"):
             y=0.89
         ),
         height=400,  # Set consistent figure height
-        margin=dict(l=40, r=40, t=80, b=50),  # Adjust margins
+        margin=dict(l=55, r=40, t=80, b=50),  # Adjust margins
         showlegend=True,
         annotations=[
             dict(
@@ -557,6 +453,7 @@ def create_warehouse_map(warehouse_data):
 
     return fig
 
+@time_and_memory_streamlit
 def check_units_available_in_warehouse(graph, product_id):
     for node in graph.nodes(data=True):
         if node[0] == product_id:
@@ -583,6 +480,7 @@ def check_units_available_in_warehouse(graph, product_id):
     else:
         return f"No warehouses found with the product with ID '{product_id}'."
 
+@time_and_memory_streamlit
 def find_suppliers_to_warehouse_table(graph, warehouse_id):
     supplier_data = []
 
@@ -606,7 +504,7 @@ def find_suppliers_to_warehouse_table(graph, warehouse_id):
 
     return suppliers_df
 
-
+@time_and_memory_streamlit
 def find_parts_for_warehouse(graph, warehouse_id):
     # Data storage for parts
     parts_data = []
@@ -634,6 +532,7 @@ def find_parts_for_warehouse(graph, warehouse_id):
     return parts_df
 
 #max-capacity-current capacity should be greater than 15 percent of max-capacity
+@time_and_memory_streamlit
 def find_warehouses_below_safety_stock(graph):
     under_threshold_warehouses = []
 
@@ -653,6 +552,7 @@ def find_warehouses_below_safety_stock(graph):
     warehouse_df = pd.DataFrame(under_threshold_warehouses)
     return warehouse_df
 
+@time_and_memory_streamlit
 def find_warehouses_by_storage_cost(graph):
     warehouse_cost_data = []
 
@@ -673,67 +573,76 @@ def find_warehouses_by_storage_cost(graph):
     warehouse_df = pd.DataFrame(warehouse_cost_data).sort_values(by="Total Storage Cost", ascending=True)
     return warehouse_df
 
+@st.fragment
 def queries():
-    st.title("Queries")
-    timestamp = 2
-    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-    query_option = st.selectbox("Choose Query", ["Select", "Check available units","Find Suppliers Supplying to a Warehouse",
-                                                 "Find Parts in Warehouse", "Find Warehouses Below Safety Stock",
-                                                 "Find Warehouses by Storage Cost"])
-    if query_option=="Check available units":
-        po_ids = get_product_offering_ids(graph)
-        if po_ids:
-            po_ids = st.selectbox(
-                "Select PRODUCT OFFERING ID",
-                options=po_ids,
-                format_func=lambda x: f"{x}",
-            )
-        else:
-            st.warning("No Product Offering IDs available for the selected timestamp.")
-            return
-        if st.button("Check Availability"):
-            avail=check_units_available_in_warehouse(graph, po_ids)
-            st.success(avail)
-    
-    elif query_option == "Find Suppliers Supplying to a Warehouse":
-        warehouse_ids = [node for node, data in graph.nodes(data=True) if data.get("node_type") == "WAREHOUSE"]
-        selected_warehouse = st.selectbox("Select a Warehouse ID:", warehouse_ids)
-
-        if st.button("Find suppliers"):
-            result = find_suppliers_to_warehouse_table(graph, selected_warehouse)
-            
-            # Display the result as a table
-            if not result.empty:
-                st.table(result)  # Use st.table to display the Pandas DataFrame as a static table
+    num_timestamps = len(st.session_state.temporal_graph.files)
+    st.write("### Warehouse Queries")
+    cols1,cols2=st.columns([2,1],gap="medium")
+    with cols2:
+        timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
+    with cols1:
+        query_option = st.selectbox("Choose Query", ["Select", "Check available units","Find Suppliers Supplying to a Warehouse",
+                                                    "Find Parts in Warehouse", "Find Warehouses Below Safety Stock",
+                                                    "Find Warehouses by Storage Cost"])
+        if query_option=="Check available units":
+        
+            po_ids = st.session_state.temporal_graph.create_node_type_index(0)["PRODUCT_OFFERING"]
+            if po_ids:
+                po_ids = st.selectbox(
+                    "Select PRODUCT OFFERING ID",
+                    options=po_ids.keys(),
+                    format_func=lambda x: f"{x}",
+                )
             else:
-                st.write("No suppliers found for the selected warehouse.")
-    
-    elif query_option == "Find Parts in Warehouse":
-        warehouse_ids = [node for node, data in graph.nodes(data=True) if data.get("node_type") == "WAREHOUSE"]
+                st.warning("No Product Offering IDs available for the selected timestamp.")
+                return
+            if st.button("Check Availability"):
+                graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+                avail=check_units_available_in_warehouse(graph, po_ids)
+                st.success(avail)
+        
+        elif query_option == "Find Suppliers Supplying to a Warehouse":
+            warehouse_ids = st.session_state.temporal_graph.create_node_type_index(0)["WAREHOUSE"]
+            selected_warehouse = st.selectbox("Select a Warehouse ID:", warehouse_ids.keys())
 
-        if warehouse_ids:
-            selected_warehouse = st.selectbox("Select a Warehouse ID:", warehouse_ids)
-
-            if st.button("Find Parts"):
-                result = find_parts_for_warehouse(graph, selected_warehouse)
+            if st.button("Find suppliers"):
+                graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+                result = find_suppliers_to_warehouse_table(graph, selected_warehouse)
                 
-                if result.empty:
-                    st.warning(f"No parts found for the warehouse '{selected_warehouse}'.")
+                # Display the result as a table
+                if not result.empty:
+                    st.dataframe(result)  # Use st.table to display the Pandas DataFrame as a static table
                 else:
-                    st.dataframe(result)
-        else:
-            st.error("No warehouse nodes found in the graph.")
+                    st.write("No suppliers found for the selected warehouse.")
+        
+        elif query_option == "Find Parts in Warehouse":
+            warehouse_ids = st.session_state.temporal_graph.create_node_type_index(0)["WAREHOUSE"]
 
-    elif query_option == "Find Warehouses Below Safety Stock":
-        if st.button("Find Warehouses"):
-                
-            result = find_warehouses_below_safety_stock(graph)
-            st.dataframe(result)
+            if warehouse_ids:
+                selected_warehouse = st.selectbox("Select a Warehouse ID:", warehouse_ids.keys())
 
-    elif query_option == "Find Warehouses by Storage Cost":
-        if st.button("Find Warehouses"):
-            result = find_warehouses_by_storage_cost(graph)
-            st.dataframe(result)
+                if st.button("Find Parts"):
+                    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+                    result = find_parts_for_warehouse(graph, selected_warehouse)
+                    
+                    if result.empty:
+                        st.warning(f"No parts found for the warehouse '{selected_warehouse}'.")
+                    else:
+                        st.dataframe(result)
+            else:
+                st.error("No warehouse nodes found in the graph.")
+
+        elif query_option == "Find Warehouses Below Safety Stock":
+            if st.button("Find Warehouses"):
+                graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp) 
+                result = find_warehouses_below_safety_stock(graph)
+                st.dataframe(result)
+
+        elif query_option == "Find Warehouses by Storage Cost":
+            if st.button("Find Warehouses"):
+                graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+                result = find_warehouses_by_storage_cost(graph)
+                st.dataframe(result)
 
 
 def main():
@@ -762,14 +671,14 @@ def main():
     st.divider() 
     
     node_details_input()
-    
-    st.text(" ")  # Adds one blank line
-    st.text(" ")  # Adds another blank line
-
     st.divider() 
 
     queries()
     
+    st.text(" ")  # Adds one blank line
+    st.text(" ")  # Adds another blank line
+
+    st.divider()
 
 if __name__ == "__main__":
     main()
