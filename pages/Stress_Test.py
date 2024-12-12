@@ -17,10 +17,11 @@ import importlib
 
 ordered_filenames = [
     '1_Business_Group',
-    '6_Parts',
     '2_Product_Family',
     '3_Product_Offering',
+    '4_Facility',
     '5_Warehouse',
+    '6_Parts',
     '7_Supplier'
 ]
 
@@ -31,6 +32,11 @@ modules = {name: importlib.import_module(f'pages.{name}') for name in ordered_fi
 bg_static_part = modules['1_Business_Group'].static_part
 bg_node_details_input = modules['1_Business_Group'].node_details_input
 bg_create_graph = modules['1_Business_Group'].create_graph
+
+f_static_part = modules['4_Facility'].static_part
+f_node_details_input = modules['4_Facility'].node_details_input
+f_create_graph = modules['4_Facility'].create_graph
+
 
 p_static_part = modules['6_Parts'].static_part
 p_node_details_input = modules['6_Parts'].node_details_input
@@ -70,6 +76,13 @@ class PageStressTester:
                    bg_static_part,
                    bg_node_details_input,
                    bg_create_graph
+               ]
+           },
+           "Facility": {
+               'functions': [
+                   f_static_part,
+                   f_node_details_input,
+                   f_create_graph
                ]
            },
             "Parts":{
@@ -275,7 +288,7 @@ def main():
         )
 
     with col2:
-        available_pages = ["Business Group", "Parts", "Product Family", "Product Offering", "Warehouse", "Supplier"]
+        available_pages = ["Business Group", "Facility", "Parts", "Product Family", "Product Offering", "Warehouse", "Supplier"]
         selected_page = st.selectbox(
             "Select a page to test",
             available_pages,

@@ -1,4 +1,3 @@
-# Monkey-patch as early as possible
 from gevent import monkey
 monkey.patch_all()
 import importlib
@@ -13,6 +12,7 @@ ordered_filenames = [
     '6_Parts',
     '2_Product_Family',
     '3_Product_Offering',
+    '4_Facility',
     '5_Warehouse',
     '7_Supplier'
 ]
@@ -36,6 +36,10 @@ pf_create_graph = modules['2_Product_Family'].create_graph
 po_static_part = modules['3_Product_Offering'].static_part
 po_node_details_input = modules['3_Product_Offering'].node_details_input
 po_queries = modules['3_Product_Offering'].queries
+
+f_static_part = modules['4_Facility'].static_part
+f_node_details_input = modules['4_Facility'].node_details_input
+f_create_graph = modules['4_Facility'].create_graph
 
 w_static_part = modules['5_Warehouse'].static_part
 w_node_details_input = modules['5_Warehouse'].node_details_input
@@ -88,6 +92,22 @@ class QueryUser(HttpUser):
             self.log_event("Parts", "p_static_part", start_time, result)
         except Exception as e:
             self.log_event("Parts", "p_static_part", start_time, exception=e)
+    @task
+    def test_p_node_details_input(self):
+        start_time = time.time()
+        try:
+            result = p_node_details_input()
+            self.log_event("Parts", "p_node_details_input", start_time, result)
+        except Exception as e:
+            self.log_event("Parts", "p_node_details_input", start_time, exception=e)    
+    @task
+    def test_p_queries(self):
+        start_time = time.time()
+        try:
+            result = p_queries()
+            self.log_event("Parts", "p_queries", start_time, result)
+        except Exception as e:
+            self.log_event("Parts", "p_queries", start_time, exception=e)
     
     @task
     def test_node_details_input(self):
@@ -106,14 +126,160 @@ class QueryUser(HttpUser):
             self.log_event("Business_Group", "bg_create_graph", start_time, result)
         except Exception as e:
             self.log_event("Business_Group", "bg_create_graph", start_time, exception=e)
+    
+    
+    @task
+    def test_pf_static_part(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling pf_static_part function")
+            result = pf_static_part()
+            self.log_event("Product_Family", "pf_static_part", start_time, result)
+        except Exception as e:
+            self.log_event("Product_Family", "pf_static_part", start_time, exception=e)
+    @task
+    def test_pf_node_details_input(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling pf_node_detsils_input function")
+            result = pf_node_details_input()
+            self.log_event("Product_Family", "pf_node_details_input", start_time, result)
+        except Exception as e:
+            self.log_event("Product_Family", "pf_node_details_input", start_time, exception=e)
+
+    @task
+    def test_pf_create_graph(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling pf_create_graph function")
+            result = pf_node_details_input()
+            self.log_event("Product_Family", "pf_create_graph", start_time, result)
+        except Exception as e:
+            self.log_event("Product_Family", "pf_create_graph", start_time, exception=e)
+
+    @task
+    def test_po_static_part(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling po_static_part function")
+            result = po_static_part()
+            self.log_event("Product_Offering", "po_static_part", start_time, result)
+        except Exception as e:
+            self.log_event("Product_Offering", "po_static_part", start_time, exception=e)
+    
+    @task
+    def test_po_node_details_input(self):
+            start_time = time.time()
+            try:
+                logging.info("Calling po_node_details_input function")
+                result = po_node_details_input()
+                self.log_event("Product_Offering", "po_node_details_input", start_time, result)
+            except Exception as e:
+                self.log_event("Product_Offering", "po_node_details_input", start_time, exception=e)
+    @task
+    def test_po_queries(self):    
+            start_time = time.time()
+            try:
+                logging.info("Calling po_queries function")
+                result = po_queries()
+                self.log_event("Product_Offering", "po_queries", start_time, result)
+            except Exception as e:
+                self.log_event("Product_Offering", "po_queries", start_time, exception=e)
+
+    @task
+    def test_w_static_part(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling w_static_part function")
+            result = w_static_part()
+            self.log_event("Warehouse", "w_static_part", start_time, result)
+        except Exception as e:
+            self.log_event("Warehouse", "w_static_part", start_time, exception=e)
+    @task
+    def test_w_node_details_input(self):
+            start_time = time.time()
+            try:
+                logging.info("Calling w_static_part function")
+                result = w_node_details_input()
+                self.log_event("Warehouse", "w_node_details_input", start_time, result)
+            except Exception as e:
+                self.log_event("Warehouse", "w_node_details_input", start_time, exception=e)
+
+    @task
+    def test_w_create_graph(self):
+        start_time = time.time()
+        try:
+                logging.info("Calling w_create_graph function")
+                result = w_node_details_input()
+                self.log_event("Warehouse", "w_create_graph", start_time, result)
+        except Exception as e:
+            self.log_event("Warehouse", "w_create_graph", start_time, exception=e)
+
+    @task
+    def test_f_static_part(self):    
+        start_time = time.time()
+        try:
+                logging.info("Calling f_static_part function")
+                result = w_node_details_input()
+                self.log_event("Facility", "f_static_part", start_time, result)
+        except Exception as e:
+            self.log_event("Facility", "f_static_part", start_time, exception=e)
+    
+    @task
+    def test_f_node_details_input(self):        
+        start_time = time.time()
+        try:
+                logging.info("Calling f_create_graph function")
+                result = w_node_details_input()
+                self.log_event("Facility", "f_create_graph", start_time, result)
+        except Exception as e:
+            self.log_event("Facility", "f_create_graph", start_time, exception=e)
+    
+    @task
+    def test_f_create_graph(self):
+        start_time = time.time()
+        try:
+                logging.info("Calling f_create_graph function")
+                result = w_node_details_input()
+                self.log_event("Facility", "f_create_graph", start_time, result)
+        except Exception as e:
+            self.log_event("Facility", "f_create_graph", start_time, exception=e)
+
+    @task
+    def test_sup_static_part(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling sup_static_part function")
+            result = sup_static_part()
+            self.log_event("Supplier", "sup_static_part", start_time, result)
+        except Exception as e:
+            self.log_event("Supplier", "sup_static_part", start_time, exception=e)
+    @task
+    def test_sup_node_details_input(self):
+            start_time = time.time()
+            try:
+                logging.info("Calling sup_static_part function")
+                result = sup_node_details_input()
+                self.log_event("Supplier", "sup_node_details_input", start_time, result)
+            except Exception as e:
+                self.log_event("Supplier", "sup_node_details_input", start_time, exception=e)
+    @task
+    def test_sup_queries(self):
+        start_time = time.time()
+        try:
+            logging.info("Calling sup_queries function")
+            result = sup_queries()
+            self.log_event("Supplier", "sup_queries", start_time, result)
+        except Exception as e:
+            self.log_event("Supplier", "sup_queries", start_time, exception=e)
 
 def load_test_page():
     st.title("Load Test with Locust")
-    selected_file = st.selectbox("Select a script to run", ordered_filenames)
+    
     if st.button("Run Load Test"):
         with st.spinner("Starting Locust..."):
-            process = subprocess.Popen([r"locust", "-f", r"D:\Class Textbook\Sem5\Querying\Supply_Chain_Dashboard\pages\Load_test.py"])
-
+            process = subprocess.Popen(["locust", "-f", r"C:\Users\HP\LAM_VS\Dashboard3\Supply_Chain_Dashboard\pages\Load_test.py"])
+            
             st.session_state["locust_process"] = process
             st.success("Locust is starting. Please wait...")
             
@@ -121,10 +287,12 @@ def load_test_page():
                 st.success("Locust is running. You can access the web interface at http://localhost:8089")
             else:
                 st.error("Failed to start Locust.")
+    
     if "locust_process" in st.session_state and st.button("Kill Locust Process"):
         locust_process = st.session_state["locust_process"]
         locust_process.terminate()
         st.success("Locust process terminated.")
+    
     st.write("Once the Locust server is running, you can access the web interface at:")
     st.code("http://localhost:8089")
     st.write("Use the web interface to start and monitor your load tests.")
