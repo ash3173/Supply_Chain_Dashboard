@@ -1,7 +1,3 @@
-
-
-
-
 # Utility Functions Documentation
 
 ## Overview

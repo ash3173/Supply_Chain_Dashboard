@@ -24,11 +24,11 @@ st.set_page_config(
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
 # base_url = "http://172.17.149.238/api"
-base_url = "https://viable-informally-alpaca.ngrok-free.app/api/docs"
+base_url = "https://viable-informally-alpaca.ngrok-free.app/api/"
 # version = "NSS_1000_12_Simulation" 
 version = "NSS_300_100"
 
-end_point_for_supplier = "https://viable-informally-alpaca.ngrok-free.app/api/docs"
+end_point_for_supplier = "https://viable-informally-alpaca.ngrok-free.app/api/"
 
 getVersions = f"{base_url}/versions"
 getTimestamp = f"{base_url}/archive/schema/{version}"
@@ -406,15 +406,27 @@ def main():
 
     target_path = os.path.join(data_folder, version)
     if os.path.exists(target_path) and os.path.isdir(target_path):
+        
         st.write("Version exists")
         all_files = [f for f in os.listdir(target_path) if os.path.isfile(os.path.join(target_path, f))]
-        all_timestamps = requests.get(getTimestamp).json()
+        
+        # check if version exists in the server
+        all_versions = requests.get(getVersions).json()
+        if version not in all_versions:
+            st.write("Version doesnt exist in the server")
 
-        for timestamp in all_timestamps:
-            if f"{timestamp}.json" not in all_files:
-                timestamp_data = requests.get(f"{getdata}/{timestamp}").json()
-                with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
-                    json.dump(timestamp_data, f, indent=4)
+        else:
+            st.write("Version exists in the server")
+
+            all_timestamps = requests.get(getTimestamp).json()
+
+            for timestamp in all_timestamps:
+                if f"{timestamp}.json" not in all_files:
+                    data = requests.get(f"{getdata}/{timestamp}")
+                    if data.status_code == 200 :
+                        timestamp_data = data.json()
+                        with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
+                            json.dump(timestamp_data, f, indent=4)
 
     else:
         st.write("Version doesnt exist")
@@ -422,9 +434,11 @@ def main():
         all_timestamps = requests.get(getTimestamp).json()
 
         for timestamp in all_timestamps:
-            timestamp_data = requests.get(f"{getdata}/{timestamp}").json()
-            with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
-                json.dump(timestamp_data, f, indent=4)
+            data = requests.get(f"{getdata}/{timestamp}")
+            if data.status_code == 200 :
+                timestamp_data = data.json()
+                with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
+                    json.dump(timestamp_data, f, indent=4)
 
     all_files = [os.path.join(target_path, f) for f in os.listdir(
         target_path) if os.path.isfile(os.path.join(target_path, f))]

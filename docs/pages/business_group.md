@@ -1,42 +1,7 @@
 # Business Group Dashboard
 
-## Key Features
-
-### 1. Finding Business Groups with highest revenue
-- Displays the top 3 business groups with the highest revenue
-- Dynamic updates based on the selected time range
-- Allows exploration of business group data across different timestamps
-
-### 2. Business Group Visualization
-- Dynamic graph visualization showing:
-  - Business Group schema
-  - Relationship between Business Group and Product Family
-- Hover interactions to view node and edge attributes
-
-### 3. Revenue Analysis
-- Multi-panel line chart showing change in revenue generation
-- Time-series representation of revenue change
-- Shaded area under the line for visual emphasis
-
-
-### 5. Business Group Details
-- Detailed information display for selected business groups
-- Attributes include:
-  - Node Type
-  - Name
-  - Description
-  - Revenue
-  - ID
-
-
-
-
-
-
-
-
 ## Overview
-The Business Group Dashboard is a Streamlit-based application designed to provide comprehensive insights into business group performance, relationships, and revenue metrics over time.This tool provides insights into revenue trends, detailed information about graph nodes, and relationships between business entities. 
+The Business Group page of the Dashboard is a Streamlit-based application designed to provide comprehensive insights into business group performance, relationships, and revenue metrics over time.This tool provides insights into revenue trends, detailed information about graph nodes, and relationships between business entities. 
 
 Key features include dynamic visualizations, interactive queries, and graph-based analyses.
 

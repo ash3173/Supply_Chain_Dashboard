@@ -2,43 +2,16 @@
 
 ## Overview
 
-The Facility page (`4_Facility.py`) manages manufacturing and production facilities within the supply chain network.
+The Facility page of the dashboard manages manufacturing and production facilities within the supply chain network.
 
-## Features
-
-### Facility Management
-- Create and edit facility profiles
-- Track facility capabilities
-- Monitor facility performance
-
-### Production Planning
-- Capacity planning
-- Resource allocation
-- Production scheduling
-
-### Performance Monitoring
-- Real-time facility metrics
-- Production efficiency tracking
-- Quality control metrics
-
-## Visualization Tools
+## Visualization
 - Facility location maps
-- Production line status
-- Performance dashboards
+- Average cost insights
 
 ## Usage
-
 The Facility page enables users to:
 - Manage facility information
-- Monitor production status
 - Track facility performance
-- Generate facility reports
-- Plan resource allocation
-
-## Integration Points
-- Warehouse management
-- Product production tracking
-- Supplier coordination
 
 ## Facility Dashboard
 
