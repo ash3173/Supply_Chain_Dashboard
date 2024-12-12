@@ -26,9 +26,9 @@ st.set_page_config(
 base_url = "http://172.17.149.238/api"
 # base_url = "https://viable-informally-alpaca.ngrok-free.app/api/"
 # version = "NSS_1000_12_Simulation" 
-version = "NSS_300_100"
+version = "Lam_1000_12_no_uic"
 
-end_point_for_supplier = "https://viable-informally-alpaca.ngrok-free.app/api/"
+end_point_for_supplier = base_url
 
 getVersions = f"{base_url}/versions"
 getTimestamp = f"{base_url}/archive/schema/{version}"
@@ -407,7 +407,7 @@ def main():
     target_path = os.path.join(data_folder, version)
     if os.path.exists(target_path) and os.path.isdir(target_path):
         
-        st.write("Version exists")
+        st.info("Version exists!")
         st.write(getVersions)
         # all_files = [f for f in os.listdir(target_path) if os.path.isfile(os.path.join(target_path, f))]
         
@@ -429,7 +429,7 @@ def main():
         #                 json.dump(timestamp_data, f, indent=4)
 
     else:
-        st.write("Version doesnt exist")
+        st.info("Version doesnt exist, downloading...")
         os.makedirs(target_path)
         all_timestamps = requests.get(getTimestamp).json()
 
@@ -631,7 +631,7 @@ def main():
                 warehouse_df = pd.DataFrame(warehouse_data)
 
                 # Display the table
-                st.table(warehouse_df)
+                st.dataframe(warehouse_df)
 
             elif choice == 2:
 
@@ -677,7 +677,7 @@ def main():
                 ).reset_index().rename(columns={"index": "Material"})
 
                 # Display the table
-                st.table(raw_materials_df)
+                st.dataframe(raw_materials_df)
 
 
                 # st.write(f"### Manufacturing Cost and Time")
@@ -733,7 +733,7 @@ def main():
                         st.write(f"### Part: {part}")
                         st.write(f"Available suppliers for **{part}** are listed below:")
                         part_df = pd.DataFrame(part_table_data)
-                        st.table(part_df)
+                        st.dataframe(part_df)
 
                 # Show a message if no data is available
                 if not any(supplier in supplier_data for suppliers in parts_data.values() for supplier in suppliers):
