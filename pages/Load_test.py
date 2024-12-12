@@ -112,7 +112,7 @@ def load_test_page():
     selected_file = st.selectbox("Select a script to run", ordered_filenames)
     if st.button("Run Load Test"):
         with st.spinner("Starting Locust..."):
-            process = subprocess.Popen(["locust", "-f", "D:\Class Textbook\Sem5\Querying\Supply_Chain_Dashboard\pages\Load_test.py"])
+            process = subprocess.Popen([r"locust", "-f", r"D:\Class Textbook\Sem5\Querying\Supply_Chain_Dashboard\pages\Load_test.py"])
 
             st.session_state["locust_process"] = process
             st.success("Locust is starting. Please wait...")

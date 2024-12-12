@@ -3,10 +3,10 @@ import requests
 import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
-# from plotly import graph_objects as go
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import networkx as nx
+import pandas as pd
 
 
 from utils import (
@@ -263,193 +263,116 @@ def node_details(node_index, po_id_input,timestamp):
             fig = plotly_ego_graph(ego_graph)
             st.plotly_chart(fig)  # Display the figure in Streamlit
 
-
-# @time_and_memory_streamlit
-# def node_details(product_data, product_id):
-#     col1, col2 = st.columns(2)
-
-#     with col1:
-#         st.write("### Product Offering Info")
-
-#         # Define the attributes of the product offering
-#         attributes = [
-#             ("Node Type", "🔗"),
-#             ("Name", "📛"),
-#             ("Cost", "💰"),
-#             ("Demand", "📈"),
-#             ("ID", "🆔")
-#         ]
-
-#         # Style for the no-border table
-#         st.markdown("""
-#             <style>
-#                 .product-table {
-#                     width: 100%;
-#                     margin-top: 20px;
-#                     border-collapse: collapse;
-#                     font-size: 16px;
-#                     font-family: Arial, sans-serif;
-#                 }
-#                 .product-table td {
-#                     padding: 8px 12px;
-#                 }
-#                 .product-table td:first-child {
-#                     font-weight: bold;
-#                     color: #0d47a1; /* Blue color for attribute labels */
-#                     width: 40%;
-#                     text-align: left;
-#                 }
-#                 .product-table td:last-child {
-#                     color: #2596be; /* Gray color for attribute values */
-#                     width: 60%;
-#                     text-align: left;
-#                 }
-#             </style>
-#         """, unsafe_allow_html=True)
-
-#         found = False
-
-#         # Loop through product data to find matching Product ID and display details
-#         for val in product_data:
-#             if product_id and product_id in val:
-#                 found = True
-
-#                 # Create a no-border table for displaying attributes and values
-#                 table_rows = ""
-#                 for attr, icon in attributes:
-#                     table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-#                 # Display the table
-#                 st.markdown(
-#                     f"""
-#                     <table class="product-table">
-#                         {table_rows}
-#                     </table>
-#                     """,
-#                     unsafe_allow_html=True
-#                 )
-
-#         if not found:
-#             st.warning('Enter a valid product ID')
-#     with col2:
-#         if found:
-#             graph=st.session_state.temporal_graph.load_graph_at_timestamp(2)
-#             ego_graph = ego_graph_query(graph, product_id, 2)
-#             if ego_graph:
-#                 st.write(f"### Neighbors for {product_id}")
-#                 # st.write(f"Ego Graph for Node: {supplier_id}")
-#                 # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-#                 # Visualize and render the ego graph with Plotly
-#                 fig = plotly_ego_graph(ego_graph)
-#                 st.plotly_chart(fig)  # Display the figure in Streamlit
-# @st.fragment
-# def pre_detail(po_data):
-    
-#     col1,col2=st.columns([2,1])
-#     with col1:
-#         st.write("### Product Offering Details Viewer")
-#         all_po = ["Select Product Offering"]
-#         for po in po_data:
-#             all_po.append(po[-1])
-#         po_id_input = st.selectbox("Choose Product Offering Id",all_po)
-    
-#     if po_id_input!="Select Product Offering":
-#         node_details(po_data, po_id_input)
-
+@st.fragment
 def queries():
-    query_options = ["Profitable Products", "Cost and Demand Across Timestamps", "Storage Cost Analysis"]
-    selected_query = st.selectbox("Select a Query", query_options)
-    num_timestamps = len(st.session_state.temporal_graph.files)
-    temporal_graph = st.session_state.temporal_graph
+    # import pandas as pd
+    st.write("### Product Offering Queries")
+    cols1,cols2=st.columns([2,1],gap="medium")
+    with cols1:
 
-    if selected_query == "Profitable Products":
-        # Query 1
-        timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
-        demand_threshold = st.text_input("Enter Demand Threshold", "10")
-        cost_threshold = st.text_input("Enter Cost Threshold", "100")
+        query_options = ["Select","Profitable Products", "Cost and Demand Across Timestamps", "Storage Cost Analysis"]
+        selected_query = st.selectbox("Select a Query", query_options)
+        num_timestamps = len(st.session_state.temporal_graph.files)
+        temporal_graph = st.session_state.temporal_graph
 
-        try:
-            demand_threshold = int(demand_threshold)
-            cost_threshold = int(cost_threshold)
-        except ValueError:
-            st.error("Please enter valid numerical values for thresholds.")
-            return
+        if selected_query == "Profitable Products":
+            with cols2:
+                timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
+            # Query 1
+            demand_threshold = st.text_input("Enter Demand Threshold", "10")
+            cost_threshold = st.text_input("Enter Cost Threshold", "100")
 
-        if st.button("Query Profitable Products"):
-            profitable_products = query_profitable_products(
-                temporal_graph,
-                timestamp,
-                cost_threshold,
-                demand_threshold
-            )
+            try:
+                demand_threshold = int(demand_threshold)
+                cost_threshold = int(cost_threshold)
+            except ValueError:
+                st.error("Please enter valid numerical values for thresholds.")
+                return
 
-            if profitable_products:
-                st.subheader(f"Profitable Products at Timestamp {timestamp}")
-                # Display as a list
-                st.write("Profitable Products (ID, Cost, Demand):")
-                for product in profitable_products:
-                    st.write(f"- ID: {product[0]}, Cost: {product[1]}, Demand: {product[2]}")
+            if st.button("Query Profitable Products"):
+                profitable_products = query_profitable_products(
+                    temporal_graph,
+                    timestamp,
+                    cost_threshold,
+                    demand_threshold
+                )
+
+                if profitable_products:
+                    st.subheader(f"Profitable Products at Timestamp {timestamp}")
+                    # Convert list of tuples to a Pandas DataFrame for tabular representation
+                    df = pd.DataFrame(
+                        profitable_products, 
+                        columns=["Product ID", "Cost", "Demand"]
+                    )
+                    with st.container(height=260,border =False):
+                        st.table(df)  # Display as a table
+                else:
+                    st.warning(f"No profitable products found for the given thresholds at Timestamp {timestamp}.")
+
+
+        elif selected_query == "Cost and Demand Across Timestamps":
+            st.subheader("Cost and Demand Across Timestamps")
+
+        
+
+            # # Dynamically retrieve PRODUCT_OFFERING IDs for the selected timestamp
+            # product_offering_ids = get_product_offering_ids(temporal_graph, timestamp)
+            product_offering_ids=st.session_state.temporal_graph.create_node_type_index(0)["PRODUCT_OFFERING"]
+
+            if product_offering_ids:
+                product_offering_id = st.selectbox(
+                    "Select PRODUCT_OFFERING ID",
+                    options=product_offering_ids.keys(),
+                    format_func=lambda x: f"{x}",
+                )
             else:
-                st.warning(f"No profitable products found for the given thresholds at Timestamp {timestamp}.")
+                st.warning("No PRODUCT_OFFERING IDs available for the selected timestamp.")
+                return
 
-    elif selected_query == "Cost and Demand Across Timestamps":
-        st.subheader("Cost and Demand Across Timestamps")
+            if st.button("Query Cost and Demand"):
+                costs, demands = query_product_cost_demand_across_timestamps(temporal_graph, product_offering_id)
 
-        # Select Timestamp
-        timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
+                if costs and demands:
+                    
+                    # Plot Cost
+                    cost_df = pd.DataFrame(costs, columns=["Timestamp", "Cost"])
+                    fig_cost = px.line(cost_df, x="Timestamp", y="Cost", title="Cost Across Timestamps")
+                    
 
-        # Dynamically retrieve PRODUCT_OFFERING IDs for the selected timestamp
-        product_offering_ids = get_product_offering_ids(temporal_graph, timestamp)
+                    # Plot Demand
+                    demand_df = pd.DataFrame(demands, columns=["Timestamp", "Demand"])
+                    fig_demand = px.line(demand_df, x="Timestamp", y="Demand", title="Demand Across Timestamps")
+                    
 
-        if product_offering_ids:
-            product_offering_id = st.selectbox(
-                "Select PRODUCT_OFFERING ID",
-                options=product_offering_ids,
-                format_func=lambda x: f"{x}",
-            )
-        else:
-            st.warning("No PRODUCT_OFFERING IDs available for the selected timestamp.")
-            return
+                    l,r=st.columns(2)
+                    with l:
+                        st.plotly_chart(fig_cost)
+                    with r:
+                        st.plotly_chart(fig_demand)
+                else:
+                    st.warning(f"No data found for Product Offering ID {product_offering_id}.")
 
-        if st.button("Query Cost and Demand"):
-            costs, demands = query_product_cost_demand_across_timestamps(temporal_graph, product_offering_id)
 
-            if costs and demands:
-                # Plot Cost
-                cost_df = pd.DataFrame(costs, columns=["Timestamp", "Cost"])
-                fig_cost = px.line(cost_df, x="Timestamp", y="Cost", title="Cost Across Timestamps")
-                st.plotly_chart(fig_cost)
+        elif selected_query == "Storage Cost Analysis":
 
-                # Plot Demand
-                demand_df = pd.DataFrame(demands, columns=["Timestamp", "Demand"])
-                fig_demand = px.line(demand_df, x="Timestamp", y="Demand", title="Demand Across Timestamps")
-                st.plotly_chart(fig_demand)
+            with cols2:
+                timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
+
+            # Dynamically retrieve PRODUCT_OFFERING IDs for the selected timestamp
+            product_offering_ids=st.session_state.temporal_graph.create_node_type_index(0)["PRODUCT_OFFERING"]
+
+            if product_offering_ids:
+                product_offering_id = st.selectbox(
+                    "Select PRODUCT_OFFERING ID",
+                    options=product_offering_ids.keys(),
+                    format_func=lambda x: f"{x}",
+                )
             else:
-                st.warning(f"No data found for Product Offering ID {product_offering_id}.")
+                st.warning("No PRODUCT_OFFERING IDs available for the selected timestamp.")
+                return
 
-
-    elif selected_query == "Storage Cost Analysis":
-        st.subheader("Storage Cost Analysis")
-
-        # Select Timestamp
-        timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
-
-        # Dynamically retrieve PRODUCT_OFFERING IDs for the selected timestamp
-        product_offering_ids = get_product_offering_ids(temporal_graph, timestamp)
-
-        if product_offering_ids:
-            product_offering_id = st.selectbox(
-                "Select PRODUCT_OFFERING ID",
-                options=product_offering_ids,
-                format_func=lambda x: f"{x}",
-            )
-        else:
-            st.warning("No PRODUCT_OFFERING IDs available for the selected timestamp.")
-            return
-
-        if st.button("Analyze Costs"):
-            query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp)
+            if st.button("Analyze Costs"):
+                query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp)
 
 
 def get_product_offering_ids(temporal_graph, timestamp):
@@ -589,6 +512,7 @@ def get_product_family_to_offering_relationships(data):
 
     return family_to_offering
 
+@time_and_memory_streamlit
 def query_profitable_products(temporal_graph, timestamp, cost_threshold, demand_threshold):
     """
     Query 1: Find profitable products based on cost and demand thresholds.
@@ -604,6 +528,7 @@ def query_profitable_products(temporal_graph, timestamp, cost_threshold, demand_
                 profitable_products.append((node, making_cost, demand))
     return profitable_products
 
+@time_and_memory_streamlit
 def query_product_cost_demand_across_timestamps(temporal_graph, product_offering_id):
     """
     Query 2: Retrieve the cost and demand of a product offering across timestamps.
@@ -628,6 +553,7 @@ def query_product_cost_demand_across_timestamps(temporal_graph, product_offering
     return costs, demands
 
 
+@time_and_memory_streamlit
 def query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp):
     """
     Query and visualize product costs and storage costs for a given PRODUCT_OFFERING using Plotly.
@@ -656,31 +582,34 @@ def query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp):
             storage_cost = attrs.get("storage_cost", 0)
             warehouse_costs[warehouse_name] = storage_cost
 
-    # Plot product costs per facility
-    if facility_costs:
-        st.subheader("Product Cost per Facility")
-        facility_fig = px.bar(
-            x=list(facility_costs.keys()),
-            y=list(facility_costs.values()),
-            labels={"x": "Facilities", "y": "Product Cost"},
-            title="Product Cost per Facility",
-        )
-        st.plotly_chart(facility_fig)
-    else:
-        st.warning("No facilities found storing the given product offering.")
+    l,r=st.columns(2)
+    with l:
+        
+        # Plot product costs per facility
+        if facility_costs:
+            facility_fig = px.bar(
+                x=list(facility_costs.keys()),
+                y=list(facility_costs.values()),
+                labels={"x": "Facilities", "y": "Product Cost"},
+                title="Product Cost per Facility",
+            )
+            st.plotly_chart(facility_fig)
+        else:
+            st.warning("No facilities found storing the given product offering.")
 
-    # Plot storage costs per warehouse
-    if warehouse_costs:
-        st.subheader("Storage Cost per Warehouse")
-        warehouse_fig = px.bar(
-            x=list(warehouse_costs.keys()),
-            y=list(warehouse_costs.values()),
-            labels={"x": "Warehouses", "y": "Storage Cost"},
-            title="Storage Cost per Warehouse",
-        )
-        st.plotly_chart(warehouse_fig)
-    else:
-        st.warning("No warehouses found storing the given product offering.")
+    with r:
+
+        # Plot storage costs per warehouse
+        if warehouse_costs:
+            warehouse_fig = px.bar(
+                x=list(warehouse_costs.keys()),
+                y=list(warehouse_costs.values()),
+                labels={"x": "Warehouses", "y": "Storage Cost"},
+                title="Storage Cost per Warehouse",
+            )
+            st.plotly_chart(warehouse_fig)
+        else:
+            st.warning("No warehouses found storing the given product offering.")
 
 
 

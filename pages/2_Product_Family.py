@@ -259,7 +259,7 @@ def node_details_input():
         
         pf_index = st.session_state.temporal_graph.create_node_type_index(timestamp)["PRODUCT_FAMILY"]
         # Heading for the Business Group Info
-        st.write("### Product Family Info")
+        st.write("### Product Family Information Viewer")
         
         # Use the keys of the index dictionary directly
         all_pf = ["Select Product Family"] + list(pf_index.keys())
