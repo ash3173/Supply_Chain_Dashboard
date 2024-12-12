@@ -420,13 +420,11 @@ def main():
 
             all_timestamps = requests.get(getTimestamp).json()
 
-            for timestamp in all_timestamps:
-                if f"{timestamp}.json" not in all_files:
-                    data = requests.get(f"{getdata}/{timestamp}")
-                    if data.status_code == 200 :
-                        timestamp_data = data.json()
-                        with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
-                            json.dump(timestamp_data, f, indent=4)
+        for timestamp in all_timestamps:
+            if f"{timestamp}.json" not in all_files:
+                timestamp_data = requests.get(f"{getdata}/{timestamp}").json()
+                with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
+                    json.dump(timestamp_data, f, indent=4)
 
     else:
         st.write("Version doesnt exist")
