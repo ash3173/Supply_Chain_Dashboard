@@ -16,6 +16,33 @@ from utils import time_and_memory_streamlit,ego_graph_query,plotly_ego_graph
 #     initial_sidebar_state="expanded",
 #     )
 
+@st.fragment
+def static_part():
+    timestamp=1
+    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
+    # if url_data.status_code != 200:
+    #     st.error("Failed to load data from the server.")
+    #     return
+    # data = url_data.json()
+    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+
+    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+    facility_nodes = data["node_values"]["FACILITY"]
+    col1,col2,col3=st.columns([1,4,2])
+    with col1:
+        fig = create_graph()
+        st.plotly_chart(fig, use_container_width=True)
+    with col2:
+        fig= create_facility_map(facility_nodes)
+        st.plotly_chart(fig, use_container_width=True)  # Display figure 1
+    with col3:
+        with st.container(border=False): 
+            lam_avg_cost, external_avg_cost = compute_average_operating_costs(facility_nodes)
+            fig = plot_average_operating_cost(lam_avg_cost, "LAM",external_avg_cost, "External")
+            
+            st.pyplot(fig)
+    st.markdown("<hr style='margin-top: -50px; margin-bottom: -50px; border: none; border-top: 1px solid #ccc;' />", unsafe_allow_html=True)
+
 def create_graph():
     # Define node attributes
     nodes = {
@@ -250,40 +277,64 @@ def compute_average_operating_costs(facilities):
 
     return lam_avg_cost, external_avg_cost
 
-@st.fragment
-def node_details_input(facility_nodes):
-    col1,col2=st.columns([2,1])
-    with col1:
-        st.write("### Facility Details Viewer")
-        all_facility = ["Select Facility"]
-        for fac in facility_nodes:
-            all_facility.append(fac[-1])
-        facility_id_input = st.selectbox("Choose Facility Id",all_facility)
+# @st.fragment
+# def node_details_input(facility_nodes):
+#     col1,col2=st.columns([2,1])
+#     with col1:
+#         st.write("### Facility Details Viewer")
+#         all_facility = ["Select Facility"]
+#         for fac in facility_nodes:
+#             all_facility.append(fac[-1])
+#         facility_id_input = st.selectbox("Choose Facility Id",all_facility)
     
+#     if facility_id_input!="Select Facility":
+#         node_details(facility_nodes, facility_id_input)
+
+
+@st.fragment
+def node_details_input():
+
+    col1, col2 = st.columns([1.5, 1],gap="large")
+    with col2:
+        st.write("###")
+        timestamp = st.slider("Select Timestamp", min_value=0, max_value=len(st.session_state.temporal_graph.files) - 1)
+    with col1:
+        
+        facility_index = st.session_state.temporal_graph.create_node_type_index(timestamp)["FACILITY"]
+        # Heading for the Business Group Info
+        st.write("### Facility Information Viewer")
+        
+        # Use the keys of the index dictionary directly
+        all_facility = ["Select Facility"] + list(facility_index.keys())
+
+        # Create a selectbox using these keys
+        facility_id_input = st.selectbox("Choose Facility Id",all_facility)
+    # Display node details if a valid business group is selected
     if facility_id_input!="Select Facility":
-        node_details(facility_nodes, facility_id_input)
+        node_details(facility_index, facility_id_input,timestamp)
 
 @st.fragment
 @time_and_memory_streamlit
-def node_details(facility_data, facility_id):
+def node_details(node_index, facility_id,timestamp):
     col1, col2 = st.columns(2)
-
     with col1:
         st.write("### Facility Info")
-    
-        # Define the attributes of the facility
-        attributes = [
-            ("Node Type", "🔗"),
-            ("Name", "📛"),
-            ("Type", "🏭"),
-            ("Location", "📍"),
-            ("Max Capacity", "📦"),
-            ("Operating Cost", "💰"),
-            ("ID", "🆔")
-        ]
-
-        # Style for the no-border table
-        st.markdown("""
+        
+        # Fetch details directly from the index dictionary
+        node_data = node_index.get(facility_id)
+        
+        if node_data:
+            # Define the attributes of the facility
+            attributes = [
+                ("Node Type", "🔗"),
+                ("Name", "📛"),
+                ("Type", "🏭"),
+                ("Location", "📍"),
+                ("Max Capacity", "📦"),
+                ("Operating Cost", "💰"),
+                ("ID", "🆔")
+                ]
+            st.markdown("""
             <style>
                 .facility-table {
                     width: 100%;
@@ -307,26 +358,15 @@ def node_details(facility_data, facility_id):
                     text-align: left;
                 }
             </style>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-        found = False
+            # Ensure node_data is a list and extract values based on their order
+            table_rows = ""
+            for index, (attr, icon) in enumerate(attributes):
+                value = node_data[index] if index < len(node_data) else "N/A"
+                table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
 
-        # Loop through facility data to find matching Facility ID and display details
-        for val in facility_data:
-            if facility_id and facility_id in val:
-                found = True
-
-                # Create a no-border table for displaying attributes and values
-                table_rows = ""
-                for attr, icon in attributes:
-                    if attr == "Operating Cost":
-                        # Ensure that operating cost is formatted as a currency or a number
-                        table_rows += f"<tr><td>{icon} {attr}:</td><td>${val[attributes.index((attr, icon))]:,.2f}</td></tr>"
-                    else:
-                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-                # Display the table
-                st.markdown(
+            st.markdown(
                     f"""
                     <table class="facility-table">
                         {table_rows}
@@ -335,20 +375,109 @@ def node_details(facility_data, facility_id):
                     unsafe_allow_html=True
                 )
 
-        if not found:
-            st.warning('Enter a valid facility ID')
-    with col2:
-        if found:
-            graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-            ego_graph = ego_graph_query(graph, facility_id, 1)
-            if ego_graph:
-                st.write(f"### Neighbors for {facility_id}")
-                # st.write(f"Ego Graph for Node: {supplier_id}")
-                # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+        else:
+            st.warning("Facility ID not found.")
 
-                # Visualize and render the ego graph with Plotly
-                fig = plotly_ego_graph(ego_graph)
-                st.plotly_chart(fig)  # Display the figure in Streamlit
+    with col2:
+        # if found:
+        graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+        ego_graph = ego_graph_query(graph, facility_id, 1)
+        if ego_graph:
+            st.write(f"### Neighbors for {facility_id}")
+            # st.write(f"Ego Graph for Node: {supplier_id}")
+            # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+            # Visualize and render the ego graph with Plotly
+            fig = plotly_ego_graph(ego_graph)
+            st.plotly_chart(fig)  # Display the figure in Streamlit
+
+
+# @st.fragment
+# @time_and_memory_streamlit
+# def node_details(facility_data, facility_id):
+#     col1, col2 = st.columns(2)
+
+#     with col1:
+#         st.write("### Facility Info")
+    
+#         # Define the attributes of the facility
+#         attributes = [
+#             ("Node Type", "🔗"),
+#             ("Name", "📛"),
+#             ("Type", "🏭"),
+#             ("Location", "📍"),
+#             ("Max Capacity", "📦"),
+#             ("Operating Cost", "💰"),
+#             ("ID", "🆔")
+#         ]
+
+#         # Style for the no-border table
+#         st.markdown("""
+#             <style>
+#                 .facility-table {
+#                     width: 100%;
+#                     margin-top: 20px;
+#                     border-collapse: collapse;
+#                     font-size: 16px;
+#                     font-family: Arial, sans-serif;
+#                 }
+#                 .facility-table td {
+#                     padding: 8px 12px;
+#                 }
+#                 .facility-table td:first-child {
+#                     font-weight: bold;
+#                     color: #0d47a1; /* Blue color for attribute labels */
+#                     width: 40%;
+#                     text-align: left;
+#                 }
+#                 .facility-table td:last-child {
+#                     color: #2596be; /* Gray color for attribute values */
+#                     width: 60%;
+#                     text-align: left;
+#                 }
+#             </style>
+#         """, unsafe_allow_html=True)
+
+#         found = False
+
+#         # Loop through facility data to find matching Facility ID and display details
+#         for val in facility_data:
+#             if facility_id and facility_id in val:
+#                 found = True
+
+#                 # Create a no-border table for displaying attributes and values
+#                 table_rows = ""
+#                 for attr, icon in attributes:
+#                     if attr == "Operating Cost":
+#                         # Ensure that operating cost is formatted as a currency or a number
+#                         table_rows += f"<tr><td>{icon} {attr}:</td><td>${val[attributes.index((attr, icon))]:,.2f}</td></tr>"
+#                     else:
+#                         table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
+
+#                 # Display the table
+#                 st.markdown(
+#                     f"""
+#                     <table class="facility-table">
+#                         {table_rows}
+#                     </table>
+#                     """,
+#                     unsafe_allow_html=True
+#                 )
+
+#         if not found:
+#             st.warning('Enter a valid facility ID')
+#     with col2:
+#         if found:
+#             graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
+#             ego_graph = ego_graph_query(graph, facility_id, 1)
+#             if ego_graph:
+#                 st.write(f"### Neighbors for {facility_id}")
+#                 # st.write(f"Ego Graph for Node: {supplier_id}")
+#                 # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
+
+#                 # Visualize and render the ego graph with Plotly
+#                 fig = plotly_ego_graph(ego_graph)
+#                 st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
 def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, identifier2):
@@ -516,32 +645,10 @@ def main():
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
     
-    timestamp=1
-    # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
-    # if url_data.status_code != 200:
-    #     st.error("Failed to load data from the server.")
-    #     return
-    # data = url_data.json()
-    data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+    static_part()
 
-    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
-    facility_nodes = data["node_values"]["FACILITY"]
-    col1,col2,col3=st.columns([1,4,2])
-    with col1:
-        fig = create_graph()
-        st.plotly_chart(fig, use_container_width=True)
-    with col2:
-        fig= create_facility_map(facility_nodes)
-        st.plotly_chart(fig, use_container_width=True)  # Display figure 1
-    with col3:
-        with st.container(border=False): 
-            lam_avg_cost, external_avg_cost = compute_average_operating_costs(facility_nodes)
-            fig = plot_average_operating_cost(lam_avg_cost, "LAM",external_avg_cost, "External")
-            
-            st.pyplot(fig)
-    st.markdown("<hr style='margin-top: -50px; margin-bottom: -50px; border: none; border-top: 1px solid #ccc;' />", unsafe_allow_html=True)
 
-    node_details_input(facility_nodes)
+    node_details_input()
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line
 

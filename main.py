@@ -23,12 +23,12 @@ st.set_page_config(
 # getdata = f"{base_url}/archive/schema/{version}"
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
-# base_url = "http://172.17.149.238/api"
-base_url = "https://viable-informally-alpaca.ngrok-free.app/api/docs"
+base_url = "http://172.17.149.238/api"
+# base_url = "https://viable-informally-alpaca.ngrok-free.app/api/docs"
 # version = "NSS_1000_12_Simulation" 
 version = "NSS_300_100"
 
-end_point_for_supplier = "https://viable-informally-alpaca.ngrok-free.app/api/docs"
+end_point_for_supplier = "https://viable-informally-alpaca.ngrok-free.app/api/"
 
 getVersions = f"{base_url}/versions"
 getTimestamp = f"{base_url}/archive/schema/{version}"
@@ -407,14 +407,14 @@ def main():
     target_path = os.path.join(data_folder, version)
     if os.path.exists(target_path) and os.path.isdir(target_path):
         st.write("Version exists")
-        all_files = [f for f in os.listdir(target_path) if os.path.isfile(os.path.join(target_path, f))]
-        all_timestamps = requests.get(getTimestamp).json()
+        # all_files = [f for f in os.listdir(target_path) if os.path.isfile(os.path.join(target_path, f))]
+        # all_timestamps = requests.get(getTimestamp).json()
 
-        for timestamp in all_timestamps:
-            if f"{timestamp}.json" not in all_files:
-                timestamp_data = requests.get(f"{getdata}/{timestamp}").json()
-                with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
-                    json.dump(timestamp_data, f, indent=4)
+        # for timestamp in all_timestamps:
+        #     if f"{timestamp}.json" not in all_files:
+        #         timestamp_data = requests.get(f"{getdata}/{timestamp}").json()
+        #         with open(os.path.join(target_path, f"{timestamp}.json"), "w") as f:
+        #             json.dump(timestamp_data, f, indent=4)
 
     else:
         st.write("Version doesnt exist")
