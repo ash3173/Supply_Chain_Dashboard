@@ -304,8 +304,7 @@ def queries():
                         profitable_products, 
                         columns=["Product ID", "Cost", "Demand"]
                     )
-                    with st.container(height=260,border =False):
-                        st.table(df)  # Display as a table
+                    st.dataframe(df)
                 else:
                     st.warning(f"No profitable products found for the given thresholds at Timestamp {timestamp}.")
 
@@ -374,17 +373,6 @@ def queries():
             if st.button("Analyze Costs"):
                 query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp)
 
-
-def get_product_offering_ids(temporal_graph, timestamp):
-    """
-    Retrieve all available PRODUCT_OFFERING IDs at the given timestamp.
-    """
-    G = temporal_graph.load_graph_at_timestamp(timestamp)
-    return [
-        node_id
-        for node_id, data in G.nodes(data=True)
-        if data.get("node_type") == "PRODUCT_OFFERING"
-    ]
 
 
 def create_graph():
