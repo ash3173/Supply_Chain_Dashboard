@@ -396,6 +396,33 @@ def convert_json_to_graph(data):
 
 
 def main():
+    st.markdown("""
+    <style>
+        /* Remove blank space at top and bottom */
+        .block-container {
+            padding-top: 1rem; /* Add some padding to avoid cutting off the title */
+            padding-bottom: 0rem;
+        }
+
+        /* Adjust canvas positioning */
+        .st-emotion-cache-z5fcl4 {
+            position: relative;
+            top: -30px; /* Adjusted to avoid cutting the title */
+        }
+
+        /* Toolbar transparency and content accessibility */
+        .st-emotion-cache-18ni7ap {
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0%); /* Use correct rgba syntax for transparency */
+        }
+        .st-emotion-cache-zq5wmm {
+            pointer-events: auto;
+            background: rgb(255, 255, 255);
+            border-radius: 5px;
+        }
+        
+    </style>
+    """, unsafe_allow_html=True)
     st.title("Temporal Graph Dashboard")
     # st.write("Selected Version", version)
 
@@ -475,7 +502,7 @@ def main():
     )
 
 # Use Streamlit's empty container to render content inside custom divs
-    col1 , col2 = st.columns(2)
+    col1 , col2 = st.columns(2,gap="large")
 
     with col1:
         
@@ -505,7 +532,7 @@ def main():
         display_node_boxes(df)
 
     with col2:
-        # st.write("## Graph Schema Visualization")
+        st.write("## Graph Schema Visualization")
         st.markdown(
             """
             <style>
@@ -517,7 +544,7 @@ def main():
             unsafe_allow_html=True
         )
 
-        st.markdown('<h2 class="custom-header">Graph Schema</h2>', unsafe_allow_html=True)
+        # st.markdown('<h2 class="custom-header">Graph Schema</h2>', unsafe_allow_html=True)
 
 
         # Inject custom CSS to style the iframe and make it responsive
@@ -531,9 +558,9 @@ def main():
 
             .responsive-iframe {
                 width: 100%; /* Full width of the parent container */
-                height: 100%; /* Adjust height relative to the parent */
+                height: 410px; /* Adjust height relative to the parent */
                 background-color: rgba(14,17,23,255);
-                margin-left : 30px;
+                margin-left : 10px;
                 border-radius: 30px;
                 border: none;
                 overflow: hidden !important; /* Optional: force hide scrollbars */
@@ -743,6 +770,9 @@ def main():
                 #     st.write(supplier)  # Adjust based on your data structure
 
 
-        
+    st.text(" ")  # Adds one blank line
+    st.text(" ")  # Adds another blank line
+
+    st.divider()  # Adds a horizontal divider (thin line), visually separating sections
 if __name__ == "__main__":
     main()

@@ -636,7 +636,10 @@ def queries():
             if st.button("Find Warehouses"):
                 graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp) 
                 result = find_warehouses_below_safety_stock(graph)
-                st.dataframe(result)
+                if not result.empty:
+                    st.dataframe(result)
+                else:
+                    st.write("No warehouse found below safety stock.")
 
         elif query_option == "Find Warehouses by Storage Cost":
             if st.button("Find Warehouses"):

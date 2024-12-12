@@ -243,7 +243,16 @@ def node_details(node_index, sup_id,timestamp):
             table_rows = ""
             for index, (attr, icon) in enumerate(attributes):
                 value = node_data[index] if index < len(node_data) else "N/A"
-                table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
+                if attr == "Supplied Part Types":
+                        # Convert the list of supplied parts to a comma-separated string
+            
+                        types=", ".join(value) 
+                        if not types:
+                            types="N/A"
+                        
+                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{types}</td></tr>"
+                else:
+                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
 
             st.markdown(
                     f"""
