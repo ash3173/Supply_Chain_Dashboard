@@ -18,7 +18,7 @@ from utils import time_and_memory_streamlit,ego_graph_query,plotly_ego_graph
 
 @st.fragment
 def static_part():
-    timestamp=1
+    timestamp=0
     # url_data = requests.get(st.session_state.temporal_graph.files[timestamp])
     # if url_data.status_code != 200:
     #     st.error("Failed to load data from the server.")
@@ -26,7 +26,6 @@ def static_part():
     # data = url_data.json()
     data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
 
-    graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
     facility_nodes = data["node_values"]["FACILITY"]
     col1,col2,col3=st.columns([1,4,2])
     with col1:
@@ -277,19 +276,6 @@ def compute_average_operating_costs(facilities):
 
     return lam_avg_cost, external_avg_cost
 
-# @st.fragment
-# def node_details_input(facility_nodes):
-#     col1,col2=st.columns([2,1])
-#     with col1:
-#         st.write("### Facility Details Viewer")
-#         all_facility = ["Select Facility"]
-#         for fac in facility_nodes:
-#             all_facility.append(fac[-1])
-#         facility_id_input = st.selectbox("Choose Facility Id",all_facility)
-    
-#     if facility_id_input!="Select Facility":
-#         node_details(facility_nodes, facility_id_input)
-
 
 @st.fragment
 def node_details_input():
@@ -392,93 +378,6 @@ def node_details(node_index, facility_id,timestamp):
             st.plotly_chart(fig)  # Display the figure in Streamlit
 
 
-# @st.fragment
-# @time_and_memory_streamlit
-# def node_details(facility_data, facility_id):
-#     col1, col2 = st.columns(2)
-
-#     with col1:
-#         st.write("### Facility Info")
-    
-#         # Define the attributes of the facility
-#         attributes = [
-#             ("Node Type", "🔗"),
-#             ("Name", "📛"),
-#             ("Type", "🏭"),
-#             ("Location", "📍"),
-#             ("Max Capacity", "📦"),
-#             ("Operating Cost", "💰"),
-#             ("ID", "🆔")
-#         ]
-
-#         # Style for the no-border table
-#         st.markdown("""
-#             <style>
-#                 .facility-table {
-#                     width: 100%;
-#                     margin-top: 20px;
-#                     border-collapse: collapse;
-#                     font-size: 16px;
-#                     font-family: Arial, sans-serif;
-#                 }
-#                 .facility-table td {
-#                     padding: 8px 12px;
-#                 }
-#                 .facility-table td:first-child {
-#                     font-weight: bold;
-#                     color: #0d47a1; /* Blue color for attribute labels */
-#                     width: 40%;
-#                     text-align: left;
-#                 }
-#                 .facility-table td:last-child {
-#                     color: #2596be; /* Gray color for attribute values */
-#                     width: 60%;
-#                     text-align: left;
-#                 }
-#             </style>
-#         """, unsafe_allow_html=True)
-
-#         found = False
-
-#         # Loop through facility data to find matching Facility ID and display details
-#         for val in facility_data:
-#             if facility_id and facility_id in val:
-#                 found = True
-
-#                 # Create a no-border table for displaying attributes and values
-#                 table_rows = ""
-#                 for attr, icon in attributes:
-#                     if attr == "Operating Cost":
-#                         # Ensure that operating cost is formatted as a currency or a number
-#                         table_rows += f"<tr><td>{icon} {attr}:</td><td>${val[attributes.index((attr, icon))]:,.2f}</td></tr>"
-#                     else:
-#                         table_rows += f"<tr><td>{icon} {attr}:</td><td>{val[attributes.index((attr, icon))]}</td></tr>"
-
-#                 # Display the table
-#                 st.markdown(
-#                     f"""
-#                     <table class="facility-table">
-#                         {table_rows}
-#                     </table>
-#                     """,
-#                     unsafe_allow_html=True
-#                 )
-
-#         if not found:
-#             st.warning('Enter a valid facility ID')
-#     with col2:
-#         if found:
-#             graph=st.session_state.temporal_graph.load_graph_at_timestamp(1)
-#             ego_graph = ego_graph_query(graph, facility_id, 1)
-#             if ego_graph:
-#                 st.write(f"### Neighbors for {facility_id}")
-#                 # st.write(f"Ego Graph for Node: {supplier_id}")
-#                 # st.write(f"Nodes: {ego_graph.number_of_nodes()}, Edges: {ego_graph.number_of_edges()}")
-
-#                 # Visualize and render the ego graph with Plotly
-#                 fig = plotly_ego_graph(ego_graph)
-#                 st.plotly_chart(fig)  # Display the figure in Streamlit
-
 
 def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, identifier2):
     # Create a figure with two vertically stacked subplots
@@ -518,7 +417,7 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
 
     return fig
 
-
+@time_and_memory_streamlit
 def find_product_offerings_under_threshold(data, threshold_operating_cost):
     product_offerings = []
     highest_operating_cost = 0
@@ -555,7 +454,7 @@ def find_product_offerings_under_threshold(data, threshold_operating_cost):
     return offerings_df, highest_operating_cost, highest_product_offering
 
 
-
+@time_and_memory_streamlit
 def find_all_parts_required_in_facility(data):
     facility_to_parts = data["link_values"]["PARTSToFACILITY"]
     facility = {}
@@ -574,18 +473,17 @@ def find_all_parts_required_in_facility(data):
         table_data.append([facility_name, parts_list])
 
     # Create a DataFrame from the table data (optional: if you prefer using pandas)
-    import pandas as pd
+    
     df = pd.DataFrame(table_data, columns=["Facility", "Parts"])
 
-    # Display the table using Streamlit
-    st.table(df)
 
+    st.dataframe(df)
     # Optionally return the dataframe if you need it for further processing
     return df
 
 
 
-
+@time_and_memory_streamlit
 def find_facilty_making_product(graph, product_id):
     for node in graph.nodes(data=True):
         if node[0] == product_id:
@@ -606,6 +504,68 @@ def find_facilty_making_product(graph, product_id):
         return f"The facilities making the product with ID '{product_id}' are: {facility_list}."
     else:
         return f"No facilities found making the product with ID '{product_id}'."
+
+
+@st.fragment
+def queries():
+    num_timestamps = len(st.session_state.temporal_graph.files)
+    st.write("### Facility Queries")
+    cols1,cols2=st.columns([2,1],gap="medium")
+    with cols2:
+        timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
+    with cols1:
+        
+        query_option = st.selectbox("Choose Query", ["Select", "Product Offering under threshold",
+                                                    "Parts Present in a facility"
+                                                    ,"Facility for a product"])
+
+        if query_option=="Product Offering under threshold":
+
+            
+            data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+            cost_threshold = st.slider("Cost Threshold", min_value=150.0, max_value=10000.0, value=5000.00)
+            if st.button("Find Product Offerings"):
+                offerings_df, highest_cost, highest_product = find_product_offerings_under_threshold(data, cost_threshold)
+
+                if not offerings_df.empty:
+                    st.write("**Product Offerings Under Threshold**")
+                    st.dataframe(offerings_df)
+
+                    st.write("**Highest Operating Cost and Associated Product Offering:**")
+                    st.write(f"Operating Cost: {highest_cost}")
+                    st.write(f"Product Name: {highest_product[1]}")  # Assuming index 1 is name
+                else:
+                    st.write("No product offerings found under the given threshold.")
+
+        elif query_option=="Parts Present in a facility":
+            
+            if st.button("Find Facilities"):
+                data = st.session_state.temporal_graph.load_json_at_timestamp(timestamp)
+                facility_parts_df = find_all_parts_required_in_facility(data)
+                # if not facility_parts_df.empty:
+                #     st.table(facility_parts_df)
+                # else:
+                #     st.warning(f"No facilities found at Timestamp {timestamp}.")
+                # # with st.container(height=300):
+                # st.write(facility_parts_df)
+
+        elif query_option=="Facility for a product":
+            po_ids = st.session_state.temporal_graph.create_node_type_index(0)["PRODUCT_OFFERING"]
+            if po_ids:
+                po_ids = st.selectbox(
+                    "Select PRODUCT OFFERING ID",
+                    options=po_ids.keys(),
+                    format_func=lambda x: f"{x}",
+                )
+            else:
+                st.warning("No Product Offering IDs available for the selected timestamp.")
+                return
+            if st.button("Find Facilities"):
+                graph=st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
+                facility_for_prod= find_facilty_making_product(graph,po_ids)
+                st.success(facility_for_prod)
+
+    
 
 
 
@@ -649,65 +609,14 @@ def main():
 
 
     node_details_input()
+
+    st.divider()
+
+    queries()
     st.text(" ")  # Adds one blank line
     st.text(" ")  # Adds another blank line
 
     st.divider()  # Adds a horizontal divider (thin line), visually separating sections
-    def get_product_offering_ids(graph):
-
-        return [
-            node_id
-            for node_id, data in graph.nodes(data=True)
-            if data.get("node_type") == "PRODUCT_OFFERING"
-        ]
-    st.title("Queries")
-
-    timestamp = 3
     
-    query_option = st.selectbox("Choose Query", ["Select", "Product Offering under threshold",
-                                                 "Parts Present in a facility"
-                                                 ,"Facility for a product"])
-
-    if query_option=="Product Offering under threshold":
-        cost_threshold = st.slider("Cost Threshold", min_value=150.0, max_value=10000.0, value=5000.00)
-        if st.button("Find Product Offerings"):
-            offerings_df, highest_cost, highest_product = find_product_offerings_under_threshold(data, cost_threshold)
-
-            if not offerings_df.empty:
-                st.write("**Product Offerings Under Threshold**")
-                st.dataframe(offerings_df)
-
-                st.write("**Highest Operating Cost and Associated Product Offering:**")
-                st.write(f"Operating Cost: {highest_cost}")
-                st.write(f"Product Name: {highest_product[1]}")  # Assuming index 1 is name
-            else:
-                st.write("No product offerings found under the given threshold.")
-
-    elif query_option=="Parts Present in a facility":
-        if st.button("Find Facilities"):
-            facility_parts_df = find_all_parts_required_in_facility(data)
-            # if not facility_parts_df.empty:
-            #     st.table(facility_parts_df)
-            # else:
-            #     st.warning(f"No facilities found at Timestamp {timestamp}.")
-            # # with st.container(height=300):
-            # st.write(facility_parts_df)
-
-    elif query_option=="Facility for a product":
-        po_ids = get_product_offering_ids(graph)
-        if po_ids:
-            po_ids = st.selectbox(
-                "Select PRODUCT OFFERING ID",
-                options=po_ids,
-                format_func=lambda x: f"{x}",
-            )
-        else:
-            st.warning("No Product Offering IDs available for the selected timestamp.")
-            return
-        if st.button("Find Facilities"):
-            facility_for_prod= find_facilty_making_product(graph,po_ids)
-            st.success(facility_for_prod)
-
-    st.divider()
 if __name__ == "__main__":
     main()

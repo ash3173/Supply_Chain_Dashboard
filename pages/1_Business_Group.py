@@ -104,7 +104,7 @@ def node_details_input():
         
         bg_index = st.session_state.temporal_graph.create_node_type_index(timestamp)["BUSINESS_GROUP"]
         # Heading for the Business Group Info
-        st.write("### Business Group Info")
+        st.write("### Business Group Information Viewer")
         
         # Use the keys of the index dictionary directly
         all_business_groups = ["Select Business Group"] + list(bg_index.keys())

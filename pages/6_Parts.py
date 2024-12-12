@@ -299,6 +299,8 @@ def donut_chart(data, title="Raw Material Distribution"):
 
 # Add decorator for time and memory tracking (Assuming the time_and_memory decorator is implemented elsewhere)
 # from some_module import time_and_memory
+
+@time_and_memory_streamlit
 def query_valid_parts_nx(timestamp, start_date: str, end_date: str):
 
     try:
@@ -347,6 +349,7 @@ def query_valid_parts_nx(timestamp, start_date: str, end_date: str):
 
     return valid_parts_details
 
+@time_and_memory_streamlit
 def query_most_common_subtypes_nx(timestamp: int, n: int)->str:
     # Load the graph at the given timestamp
     graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
@@ -375,6 +378,7 @@ def query_most_common_subtypes_nx(timestamp: int, n: int)->str:
 
 # Bottleneck analysis for parts
 # @time_and_memory
+@time_and_memory_streamlit
 def bottleneck_parts_temporal(timestamp, importance_threshold, expected_life_threshold):
     
     # Load the graph for the specified timestamp
@@ -410,6 +414,7 @@ def bottleneck_parts_temporal(timestamp, importance_threshold, expected_life_thr
 
 # # Query suppliers for part via warehouse
 # @time_and_memory
+@time_and_memory_streamlit
 def query_suppliers_for_part_via_warehouse(timestamp, part_id):
     
     G = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
@@ -449,6 +454,7 @@ def query_suppliers_for_part_via_warehouse(timestamp, part_id):
 # Query: Distance Impact on Costs
 
 
+@time_and_memory_streamlit
 def parts_with_larger_distances_and_lower_costs(timestamp, min_distance, max_transport_cost):
     
     # Load graph at the given timestamp
@@ -506,10 +512,12 @@ def create_bar(mydict,title):
 
 @st.fragment
 def queries():
-    col1, col2=st.columns([2,1])
+    num_timestamps = len(st.session_state.temporal_graph.files)
+    st.write("### Parts Queries")
+    col1, col2=st.columns([2,1],gap="medium")
+    with col2:
+        timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
     with col1:
-        timestamp=1
-        st.write("### Queries based on Parts")
         query_option = st.selectbox("Choose Query", ["Select","Valid Parts Query", "Most Common Subtypes Query", 
                                                             "Bottleneck Parts Analysis", "Suppliers for Part", 
                                                             "Parts with Larger Distances and Lower Costs"])
@@ -546,7 +554,7 @@ def queries():
                     st.write(f"No subtypes found at timestamp {timestamp}.")
                 else:
                     st.write(f"The {n} most common subtypes at timestamp {timestamp} are:")
-                    st.table(result_table)
+                    st.dataframe(result_table)
 
         elif query_option == "Bottleneck Parts Analysis":
             importance_threshold = st.slider("Importance Threshold", min_value=0.0, max_value=1.0, value=0.5)
@@ -560,7 +568,7 @@ def queries():
                     st.write("No bottleneck parts found for the given criteria.")
                 else:
                     st.write(f"Bottleneck Parts at Timestamp {timestamp}:")
-                    st.table(bottleneck_table)  # Display the DataFrame as a table
+                    st.dataframe(bottleneck_table)  # Display the DataFrame as a table
 
 
         elif query_option == "Suppliers for Part":
@@ -587,7 +595,7 @@ def queries():
 
                 if not results_df.empty:
                     st.write("Parts with larger distances and lower transport costs:")
-                    st.table(results_df)
+                    st.dataframe(results_df)
                 else:
                     st.write("No parts found matching the criteria.")
 def main():
