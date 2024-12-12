@@ -1,142 +1,104 @@
-# Product Offering Page
-
+# Product Offering Dashboard
 ## Overview
 
-The Product Offering page (`3_Product_Offering.py`) manages individual product offerings within the supply chain system.
+The Product Offering page of the dashboard provides comprehensive management and analysis of individual product offerings within the supply chain network. Product offerings are specific products that belong to product families, each with its own demand, cost, and performance metrics.
 
-## Features
+---
 
-### Product Management
-- Create and edit product offerings
-- Define product specifications
-- Manage product variants
+## Query Functions
 
-### Supply Chain Integration
-- Track product availability
-- Monitor supply chain dependencies
-- Manage product logistics
+### 1. Profitable Products Query
 
-### Analytics
-- Product performance metrics
-- Supply chain efficiency analysis
-- Demand forecasting
+Identifies products that meet cost and demand thresholds.
 
-## Data Visualization
-- Product supply chain maps
-- Performance dashboards
-- Inventory level tracking
+*Parameters:*
 
-## Usage
+    -  timestamp: Timestamp to query.
+    -  cost_threshold: Maximum acceptable cost.
+    -  demand_threshold: Minimum acceptable demand.
 
-Users can:
-- Add new product offerings
-- Update product details
-- Track product supply chain
-- Generate product reports
-- Analyze product metrics
+### 2. Cost and Demand Across Timestamps
 
-## Dependencies
-- Product Family data
-- Facility information
-- Supplier relationships
+Analyzes cost and demand trends for a specific product across timestamps.
 
-## Product Offering Dashboard
+*Parameters:*
 
-## Key Features
+    - product_offering_id: ID of the product offering.
 
-### 1. Product Performance Analysis
-- Individual product revenue tracking
-- Sales volume monitoring
-- Performance metrics visualization
+### 3. Storage Cost Analysis
 
-### 2. Inventory Management
-- Real-time inventory levels
-- Warehouse distribution
-- Stock level alerts and monitoring
+Examines storage costs for a product across different warehouses.
 
-### 3. Supply Chain Visibility
-- Manufacturing facility connections
-- Warehouse allocation
-- Parts requirements and availability
+*Parameters:*
 
-### 4. Product Details
-- Comprehensive product information
-- Key metrics including:
-  - Name
-  - Description
-  - Price
-  - ID
-  - Associated Product Family
-  - Current Inventory Levels
+    - product_offering_id: ID of the product offering.
+    - timestamp: Timestamp for analysis.
 
-## Overview
-The Product Offering Dashboard provides detailed insights into individual products within the supply chain network. It focuses on inventory management, manufacturing relationships, and performance metrics.
+---
 
-## Data Exploration and Visualization
+## Visualization
 
-### **1. Product Schema**
-- Detailed product hierarchy visualization
-- Connections to facilities and warehouses
-- Attributes displayed:
-  - Product: Name, ID, price, inventory
-  - Related Entities: Warehouses, facilities, parts
+- *Static Schema Visualization*: Displays node and edge relationships.
+- *Time-Series Analysis*:
+    - Average Cost and Demand for Product Families.
+    - Top Products by Demand.
+- *Graph-Based Analysis*:
+    - Ego graphs for node-specific relationships.
 
-### **2. Inventory Analysis**
-- Real-time inventory tracking
-- Warehouse distribution visualization
-- Features:
-  - Stock level monitoring
-  - Distribution patterns
-  - Inventory alerts
-
-### **3. Manufacturing Insights**
-- Facility production capacity
-- Parts requirements
-- Production timeline visualization
-
-### **4. Supply Chain Network**
-- Warehouse connections
-- Facility relationships
-- Parts dependencies
+---
 
 ## Code Structure
 
-### **1. Utility Functions**
-- Inventory tracking
-- Performance monitoring
-- Supply chain relationship mapping
-- Visualization tools
+### Utility Functions
 
-### **2. Streamlit Components**
-- Product selectors
-- Inventory displays
-- Network visualizations
+- *Graph Creation*: Defines node and edge schema for visualization.
+- *Data Retrieval*: Extracts nodes and edges based on query conditions.
+- *Query Execution*:
+      - Profitable products identification.
+      - Cost and demand trends analysis.
+      - Storage cost breakdown.
 
-### **3. Main Function**
-- Dashboard setup
-- Data synchronization
-- User interface management
+### Streamlit Fragments
+
+- *Node Details Input*: Interactive input for node details.
+- *Queries*: Execution of user-selected queries.
+
+### Main Function
+
+The primary function integrates all components:
+
+  - Visualizes static schema and top products.
+  - Handles node-specific details.
+  - Processes user-defined queries.
+
+---
 
 ## Usage Instructions
-1. Select specific products for analysis
-2. Monitor inventory levels across warehouses
-3. View manufacturing relationships
-4. Track performance metrics
+
+1. Run the script using Streamlit: streamlit run main.py.
+2. Select a timestamp and product offering for exploration.
+3. Visualize trends and execute queries for insights.
+
+---
 
 ## Performance Considerations
-- Real-time data updates
-- Efficient inventory tracking
-- Response time optimization
+  
+- Ensure efficient memory usage by preprocessing data.
+- Monitor browser performance for rendering complex visualizations.
+
+---
 
 ## Dependencies
-- Streamlit: User interface
-- NetworkX: Relationship mapping
-- Plotly: Interactive charts
-- Matplotlib: Static visualizations
-- Tracemalloc: Performance tracking
+
+- Python Libraries: streamlit, requests, pandas, plotly, networkx, matplotlib
+- *Version Requirements*: Ensure compatible library versions.
+- *Hardware Requirements*: Minimum 8GB RAM for processing large temporal graphs.
+
+---
 
 ## Recommended Improvements
-- Automated inventory alerts
-- Predictive stock management
-- Enhanced supply chain visualization
-- Real-time production tracking
+
+- Enhance query functions for advanced analysis (e.g., profitability trends over time).
+- Implement dynamic schema updates based on graph changes.
+- Add real-time data ingestion for live monitoring.
+- Expand visualization capabilities with 3D graph views.

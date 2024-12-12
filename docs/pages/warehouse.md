@@ -2,142 +2,112 @@
 
 ## Overview
 
-The Warehouse page (`5_Warehouse.py`) manages warehouse operations and inventory tracking within the supply chain system.
+The Warehouse page of the dashboard provides comprehensive management and analysis of storage facilities within the supply chain network.According to design of our supply chain there are three types of warehouses: LAM warehouse , Subassembly warehouse and Supplier warehouse. And each warehouse has 3 differnet sizes: small, medium and large.
 
-## Features
+## Key Components
 
-### Warehouse Management
-- Warehouse profile management
-- Inventory tracking
-- Storage optimization
+### Visualization and Analysis
+- **Warehouse Distribution Overview**: Uses Plotly's scatter_mapbox to create an interactive geographical visualization of all warehouses. Each warehouse is represented on the map with its location data and color-coded based on its storage capacity and utilization.
 
-### Inventory Control
-- Real-time inventory levels
-- Stock movement tracking
-- Reorder point management
+Built with Plotly's mapping functions, this feature provides:
+  - Interactive zoom and pan capabilities
+  - Clickable warehouse markers with popup information
+  - Custom map styling with mapbox
+  - Warehouse clustering for dense regions
+  - Color-coded capacity indicators
 
-### Analytics
-- Storage utilization metrics
-- Inventory turnover analysis
-- Performance tracking
+- **Warehouse Distribution based on the size**: Uses Plotly's bar chart to display the distribution of warehouse sizes.
 
-## Visualization Tools
-- Warehouse layout maps
-- Inventory level charts
-- Performance dashboards
+Built with Plotly's bar chart functions, this feature provides:
+  - Detailed breakdown of warehouse sizes
+  - Interactive hover effects for data insights
+  - Customizable color scheme for clarity
 
-## Usage
+### Analysis Tools
 
-Users can:
-- Manage warehouse information
-- Track inventory levels
-- Monitor storage utilization
-- Generate warehouse reports
-- Plan inventory movements
+1. Storage Management Analysis
+   - **Warehouse Capacity Monitoring**: 
+     - Function: `check_units_available_in_warehouse()`
+     - Uses: NetworkX for data traversal, Pandas for capacity calculations 
+     - Usage: Traverses the supply chain graph to check product availability  
+     - Process: Tracks real-time inventory levels and available storage space
+   
+   - **Safety Stock Analysis**:
+     - Function: `find_warehouses_below_safety_stock()`
+     - Process: Identifies warehouses where stock levels are below safety thresholds (15% of max capacity)
+     - Output: List of warehouses requiring attention
 
-## Integration
-- Facility coordination
-- Supplier deliveries
-- Product distribution
-- Transportation management
+   - **Storage Cost Optimization**:
+     - Function: `find_warehouses_by_storage_cost()`
+     - Process: Analyzes and ranks warehouses based on storage costs
+     - Output: DataFrame with cost-based warehouse rankings
 
-## Warehouse Dashboard
+2. Supply Chain Analysis
+   - **Supplier Relationship Tracking**:
+     - Function: `find_suppliers_to_warehouse_table()`
+     - Process: Maps supplier connections and transportation costs
+     - Usage: Traverses the supply chain graph to identify which supplier supplies what to a specific warehouse 
+     - Output: Structured supplier relationship data
 
-## Key Features
+   - **Parts Inventory Analysis**:
+     - Function: `find_parts_for_warehouse()`
+     - Process: Detailed inventory tracking of parts in each warehouse
+     - Output: Comprehensive parts inventory report
 
-### 1. Inventory Management
-- Real-time inventory tracking
-- Stock level monitoring
-- Storage capacity analysis
+   - **Network Visualization**:
+     - Function: `create_graph()`
+     - Uses: NetworkX and Plotly for interactive visualization and it shows warehouse relationship within the supply chain
+     - Process: Creates interactive supply chain network diagrams
 
-### 2. Distribution Performance
-- Order fulfillment metrics
-- Shipping efficiency
-- Delivery time analysis
+## Core Functions
 
-### 3. Resource Optimization
-- Space utilization tracking
-- Resource allocation
-- Storage optimization
+### Analysis Functions
+- `check_units_available_in_warehouse()`: 
+  - Input: Product ID and graph data
+  - Process: Traverses warehouse inventory to check product availability
+  - Output: Available units and warehouse locations
 
-### 4. Warehouse Details
-- Comprehensive facility information
-- Key metrics including:
-  - Name
-  - Location
-  - Size Category
-  - Type
-  - ID
-  - Storage Capacity
+- `find_warehouses_below_safety_stock()`:
+  - Input: Warehouse graph data
+  - Process: Analyzes capacity utilization against safety thresholds (15% rule)
+  - Output: List of warehouses below safety stock levels
 
-## Overview
-The Warehouse Dashboard provides detailed insights into storage and distribution facilities within the supply chain network. It focuses on inventory management, distribution efficiency, and resource optimization.
+- `find_warehouses_by_storage_cost()`:
+  - Input: Warehouse data
+  - Process: Ranks warehouses based on storage cost efficiency
+  - Output: Sorted list of warehouses by cost metrics
 
-## Data Exploration and Visualization
+### Supply Chain Management
+- `find_suppliers_to_warehouse_table()`:
+  - Input: Warehouse ID and graph data
+  - Process: Analyzes supplier relationships and transportation routes
+  - Output: Detailed supplier-warehouse relationship table
 
-### **1. Warehouse Schema**
-- Warehouse network visualization
-- Connections to products and suppliers
-- Attributes displayed:
-  - Warehouse: Name, location, size, type
-  - Related Entities: Products, parts, suppliers
+- `find_parts_for_warehouse()`:
+  - Input: Warehouse ID
+  - Process: Comprehensive inventory analysis of parts stored in the warehouse
+  - Output: Structured parts inventory list
 
-### **2. Inventory Analysis**
-- Real-time stock monitoring
-- Storage utilization visualization
-- Features:
-  - Stock level tracking
-  - Capacity metrics
-  - Inventory alerts
+- `node_details()`:
+  - Input: Warehouse ID and timestamp
+  - Process: Gathers and displays comprehensive warehouse information including capacity, costs, and relationships
+  - Output: Detailed warehouse metrics and visualizations
 
-### **3. Distribution Management**
-- Order processing status
-- Shipping performance tracking
-- Delivery timeline visualization
+### Visualization Functions
+- `create_warehouse_map()`:
+  - Input: Warehouse location and capacity data
+  - Process: Creates interactive geographical visualization of warehouse network
+  - Output: Interactive Plotly mapbox visualization
 
-### **4. Supply Chain Integration**
-- Supplier connections
-- Product relationships
-- Facility dependencies
-
-## Code Structure
-
-### **1. Utility Functions**
-- Inventory tracking
-- Performance monitoring
-- Distribution management
-- Visualization tools
-
-### **2. Streamlit Components**
-- Warehouse selectors
-- Inventory displays
-- Network visualizations
-
-### **3. Main Function**
-- Dashboard setup
-- Data synchronization
-- User interface management
-
-## Usage Instructions
-1. Select specific warehouses for analysis
-2. Monitor inventory levels and capacity
-3. Track distribution performance
-4. View supply chain relationships
-
-## Performance Considerations
-- Real-time data updates
-- Efficient inventory tracking
-- Response time optimization
+- `donut_chart()`:
+  - Input: Warehouse size distribution data
+  - Process: Creates visual representation of warehouse capacity distribution
+  - Output: Interactive donut chart showing size categories
 
 ## Dependencies
-- Streamlit: User interface
-- NetworkX: Relationship mapping
-- Plotly: Interactive charts
-- Matplotlib: Static visualizations
-- Tracemalloc: Performance tracking
-
-## Recommended Improvements
-- Advanced inventory optimization
-- Predictive stock management
-- Enhanced distribution routing
-- Real-time tracking integration
+- **streamlit**: Main dashboard framework and UI components
+- **plotly**: Interactive charts, maps, and network visualizations
+- **networkx**: Graph operations and network analysis
+- **altair**: Additional visualization capabilities
+- **pandas**: Data manipulation and analysis
+- **json**: Data structure handling

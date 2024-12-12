@@ -2,137 +2,80 @@
 
 ## Overview
 
-The Product Family page (`2_Product_Family.py`) manages product families and their relationships within the supply chain ecosystem.
+The Product Family page of the dashboard provides comprehensive management and analysis of product families within the supply chain network. A product family represents a group of related products that share common characteristics or manufacturing processes. Each product family can contain multiple product offerings.
 
-## Features
+## Key Components
 
-### Product Family Management
-- Create and maintain product families
-- Define product hierarchies
-- Track product relationships
+### Visualization and Analysis
+- **Product Family Network Overview**: Uses Plotly's network visualization to create an interactive view of product family relationships.
+
+Built with Plotly's network functions, this feature provides:
+  - Interactive node selection
+  - Relationship highlighting
+  - Hierarchical layout visualization
+  - Color-coded product categories
+  - Drill-down capabilities to product offerings
+
+- **Revenue Analysis**: Uses Plotly's time series charts to analyze revenue patterns.
+
+Built with Plotly's charting functions, this feature provides:
+  - Revenue trends over time
+  - Comparative analysis between product families
+  - Interactive tooltips with revenue details
+  - Customizable time range selection
 
 ### Analysis Tools
-- Product family comparison
-- Market segment analysis
-- Performance tracking
 
-### Data Visualization
-- Product family tree view
-- Relationship graphs
-- Performance dashboards
+1. Performance Analysis
+   - **Revenue Tracking**: 
+     - Function: `plot_revenues()`
+     - Uses: Plotly for visualization, Pandas for data processing
+     - Usage: Analyzes revenue patterns across different time periods
+     - Process: Creates interactive revenue visualizations
+   
+   - **Product Family Relationships**:
+     - Function: `create_graph()`
+     - Process: Builds network visualization showing relationships between product families and their offerings
+     - Usage: Helps understand product hierarchy and relationships
+     - Output: Interactive network diagram
 
-## Usage
+2. Product Management
+   - **Node Details Analysis**:
+     - Function: `node_details()`
+     - Process: Displays detailed information about specific product families
+     - Usage: Provides comprehensive view of product family attributes and relationships
+     - Output: Structured product family information
 
-The Product Family page provides tools for:
-- Creating new product families
-- Managing product hierarchies
-- Analyzing product relationships
-- Generating product reports
-- Tracking product metrics
+## Core Functions
 
-## Integration
+### Analysis Functions
+- `plot_revenues()`: 
+  - Input: Revenue data across time periods
+  - Process: Creates time series visualizations of revenue patterns
+  - Output: Interactive revenue charts
 
-The page integrates with:
-- Business Group data
-- Product Offering information
-- Supply chain metrics
+- `create_graph()`:
+  - Input: Product family relationship data
+  - Process: Constructs network visualization showing product family hierarchy
+  - Output: Interactive network diagram showing product relationships
 
-## Product Family Dashboard
+### Product Management Functions
+- `node_details()`:
+  - Input: Product family ID and timestamp
+  - Process: Gathers and displays comprehensive product family information
+  - Usage: Shows detailed metrics and relationships for selected product family
+  - Output: Detailed product family metrics
 
-### Key Features
 
-#### 1. Finding Product Families with Highest Revenue
-- Automated tracking of top-performing product families
-- Revenue comparison across different time periods
-- Visual representation of revenue distribution
+### Data Processing Functions
+- `static_part()`:
+  - Input: Temporal graph data
+  - Process: Initializes dashboard with basic visualizations
+  - Output: Base dashboard components
 
-#### 2. Revenue Trends
-- Time-series analysis of product family performance
-- Comparative revenue analysis
-- Trend identification and visualization
-
-#### 3. Revenue Visualization
-- Interactive line charts showing revenue progression
-- Time-series representation of revenue changes
-- Shaded area under the line for visual emphasis
-
-#### 4. Product Family Details
-- Detailed information display for selected product families
-- Key metrics including:
-  - Name
-  - Description
-  - Revenue
-  - ID
-  - Associated Business Groups
-
-### Overview
-The Product Family Dashboard provides insights into product category performance and relationships within the supply chain network. This tool helps analyze revenue patterns, product hierarchies, and business group associations.
-
-### Data Exploration and Visualization
-
-#### **1. Product Family Schema**
-- Hierarchical visualization of product families and their relationships
-- Connection mapping to business groups and product offerings
-- Attributes displayed:
-  - Product Family: Node type, name, revenue, ID
-  - Related Entities: Business groups, product offerings
-
-#### **2. Revenue Analysis**
-- Dynamic visualization of revenue trends
-- Comparative analysis across product families
-- Features:
-  - Multi-panel revenue plots
-  - Time-based performance tracking
-  - Revenue distribution patterns
-
-#### **3. Top Product Families**
-- Identification of highest-performing product families
-- Revenue-based ranking system
-- Visual representation of top performers
-
-#### **4. Relationship Analysis**
-- Business group associations
-- Product offering connections
-- Network visualization of product family relationships
-
-### Code Structure
-
-#### **1. Utility Functions**
-- Performance tracking decorators
-- Graph creation and manipulation
-- Revenue calculation and analysis
-- Visualization helpers
-
-#### **2. Streamlit Components**
-- Interactive filters and selectors
-- Dynamic visualizations
-- Data presentation layouts
-
-#### **3. Main Function**
-- Dashboard initialization
-- Component organization
-- User interaction handling
-
-### Usage Instructions
-1. Select time range using timestamp slider
-2. Choose specific product families for analysis
-3. View revenue trends and relationships
-4. Explore detailed product family information
-
-### Performance Considerations
-- Optimized data retrieval
-- Efficient memory management
-- Response time monitoring
-
-### Dependencies
-- Streamlit: Dashboard framework
-- NetworkX: Graph operations
-- Plotly: Interactive visualizations
-- Matplotlib: Static charts
-- Tracemalloc: Performance monitoring
-
-### Recommended Improvements
-- Enhanced filtering capabilities
-- Additional performance metrics
-- Advanced trend analysis
-- Predictive analytics integration
+## Dependencies
+- **streamlit**: Main dashboard framework and UI components
+- **plotly**: Interactive charts and network visualizations
+- **networkx**: Graph operations and relationship analysis
+- **pandas**: Data manipulation and analysis
+- **json**: Data structure handling

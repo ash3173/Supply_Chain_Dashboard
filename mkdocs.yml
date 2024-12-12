@@ -56,5 +56,6 @@ nav:
     - Warehouse: pages/warehouse.md
     - Facility: pages/facility.md
     - Parts: pages/parts.md
+    - Structural: pages/structural.md
     - Stress Test: pages/stress.md
     - Load Test: pages/load.md

@@ -2,114 +2,118 @@
 
 ## Overview
 
-The Facility page of the dashboard manages manufacturing and production facilities within the supply chain network.
+The Facility page of the dashboard provides comprehensive management and analysis of manufacturing facilities within the supply chain network.
 
-## Visualization
-- Facility location maps
-- Average cost insights
+## Key Components
 
-## Usage
-The Facility page enables users to:
-- Manage facility information
-- Track facility performance
+### Visualization and Analysis
+- **Facility Distribution Overview**: Uses Plotly's scatter_mapbox to create an interactive geographical visualization of all facilities. Each facility is represented as a point on the map with its location data (latitude, longitude) and color-coded based on its operating cost.
 
-## Facility Dashboard
+Built with Plotly's mapping functions, this feature provides:
+  - Interactive zoom and pan capabilities
+  - Clickable facility markers with popup information
+  - Custom map styling with mapbox
+  - Facility clustering for dense regions
 
-### Key Features
 
-#### 1. Production Capacity Analysis
-- Real-time capacity monitoring
-- Utilization metrics
-- Production scheduling insights
+- **Operating Cost Analysis**: Implements pandas DataFrame operations to calculate and compare operating costs across facilities. The analysis includes mean, median, and quartile calculations to identify cost outliers and trends.
+Uses Plotly Express to create:
+  - Bar charts comparing costs across facilities
+  - Time series plots showing cost trends
+  - Box plots for cost distribution analysis
+  - Interactive tooltips with detailed cost breakdowns
 
-#### 2. Manufacturing Performance
-- Production efficiency tracking
-- Quality metrics
-- Output volume analysis
 
-#### 3. Resource Management
-- Parts inventory tracking
-- Resource allocation
-- Supply chain integration
+- **Production Capacity Tracking**: Utilizes NetworkX to analyze the production network and track capacity utilization. The system monitors real-time production loads against maximum capacity.
+Combines Streamlit metrics and Plotly charts to display:
+  - Real-time production rates
+  - Capacity utilization percentages
+  - Efficiency trends over time
+  - Comparative analysis between similar facilities
 
-#### 4. Facility Details
-- Comprehensive facility information
-- Key metrics including:
-  - Name
-  - Location
-  - Capacity
-  - Cost
-  - ID
-  - Production Capabilities
 
-### Overview
-The Facility Dashboard provides detailed insights into manufacturing facilities within the supply chain network. It focuses on production capacity, resource management, and operational efficiency.
+### Analysis Tools
 
-### Data Exploration and Visualization
+1. Operating Cost Analysis
+   - **Average Operating Cost Computation**: 
+     - Function: `compute_average_operating_costs()`
+     - Uses: Pandas for data manipulation, NumPy for statistical calculations
+     - Process: Aggregates cost data across timestamps and computes rolling averages
+   
+   - **Cost Comparison Between Facilities**:
+     - Function: `plot_average_operating_cost()`
+     - Uses: Plotly for visualization, Pandas for data preparation
 
-#### **1. Facility Schema**
-- Facility network visualization
-- Connections to products and parts
-- Attributes displayed:
-  - Facility: Name, location, capacity, cost
-  - Related Entities: Products, parts, warehouses
+   - **Threshold-based Analysis**:
+     - Function: `find_product_offerings_under_threshold()`
+     - Process: Identifies facilities operating below cost thresholds
+     - Output: DataFrame with filtered facilities and their metrics
 
-#### **2. Production Analysis**
-- Real-time production monitoring
-- Capacity utilization visualization
-- Features:
-  - Output tracking
-  - Efficiency metrics
-  - Production schedules
+2. Production Analysis
+   - **Product Offering Tracking**:
+     - Uses NetworkX to trace product-facility relationships
+     - Identifies bottlenecks and optimization opportunities
 
-#### **3. Resource Management**
-- Parts inventory levels
-- Resource allocation tracking
-- Supply requirements visualization
+   - **Parts Requirement Analysis**:
+     - Function: `find_all_parts_required_in_facility()`
+     - Process: Traverses the supply chain graph to identify all required parts
+     - Output: Structured list of parts with quantities and suppliers
 
-#### **4. Supply Chain Integration**
-- Warehouse connections
-- Parts relationships
-- Product dependencies
+   - **Production Capacity Monitoring**:
+     - Real-time monitoring using Streamlit's metrics
+     - Historical trend analysis with Plotly timelines
+     - Predictive capacity planning capabilities
 
-### Code Structure
 
-#### **1. Utility Functions**
-- Production tracking
-- Performance monitoring
-- Resource management
-- Visualization tools
+## Core Functions
 
-#### **2. Streamlit Components**
-- Facility selectors
-- Production displays
-- Network visualizations
+### Analysis Functions
+- `create_facility_map()`: 
+  - Input: Facility node data with locations
+  - Process: Creates interactive map using Plotly showing concentration of facilities in different states
+  - Output: Mapbox figure with facility markers
 
-#### **3. Main Function**
-- Dashboard setup
-- Data synchronization
-- User interface management
+- `compute_average_operating_costs()`:
+  - Input: Facility cost data
+  - Process: Statistical analysis using Pandas 
+  - Output: Aggregated cost metrics
 
-### Usage Instructions
-1. Select specific facilities for analysis
-2. Monitor production capacity and utilization
-3. Track resource allocation
-4. View supply chain relationships
+- `plot_average_operating_cost()`:
+  - Input: Cost data for two facilities
+  - Process: Comparative analysis and visualization
+  - Output: Interactive Plotly comparison chart
 
-### Performance Considerations
-- Real-time data updates
-- Efficient resource tracking
-- Response time optimization
+- `find_product_offerings_under_threshold()`:
+  - Input: Facility data and cost threshold
+  - Process: Filtering and analysis
+  - Output: List of qualifying facilities
 
-### Dependencies
-- Streamlit: User interface
-- NetworkX: Relationship mapping
-- Plotly: Interactive charts
-- Matplotlib: Static visualizations
-- Tracemalloc: Performance tracking
+### Production Management
+- `find_all_parts_required_in_facility()`:
+  - Input: Facility ID
+  - Process: Graph traversal for parts identification.This function traverses the supply chain graph to identify all parts required by a specific facility.
+  - Output: Structured parts requirement list
 
-### Recommended Improvements
-- Advanced production scheduling
-- Predictive maintenance
-- Enhanced resource optimization
-- Real-time quality monitoring
+- `find_facilty_making_product()`:
+  - Input: Product ID
+  - Process: Reverse lookup in facility-product graph. This function identifies the facilities that produce a specific product.
+  - Output: List of producing facilities
+
+- `node_details()`:
+  - Input: Facility ID and timestamp
+  - Process: Comprehensive data gathering and displays the data associated with a specific facility and the relationships it has with other entities in the supply chain.
+  - Output: Detailed facility information
+
+### Network Visualization
+- `create_graph()`: 
+  - Input: Facility and relationship data
+  - Process: NetworkX graph construction
+  - Output: Interactive network showing supply chain relationships associated with a facility
+
+## Dependencies
+- **streamlit**: Main dashboard framework and UI components
+- **plotly**: Interactive charts, maps, and network visualizations
+- **networkx**: Graph operations and network analysis
+- **matplotlib**: Additional static visualizations
+- **pandas**: Data manipulation and analysis
+- **requests**: API interactions and data fetching

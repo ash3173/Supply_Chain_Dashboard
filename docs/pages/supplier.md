@@ -1,100 +1,101 @@
 # Supplier Dashboard
-
-## Key Features
-
-### 1. Supplier Performance Analysis
-- Reliability metrics
-- Delivery performance
-- Quality assessment
-
-### 2. Supply Chain Integration
-- Parts availability
-- Warehouse connections
-- Lead time tracking
-
-### 3. Cost Analysis
-- Pricing trends
-- Cost comparison
-- Volume discounts
-
-### 4. Supplier Details
-- Comprehensive supplier information
-- Key metrics including:
-  - Name
-  - Location
-  - Reliability Score
-  - Size
-  - Size Category
-  - Parts Supplied
+---
 
 ## Overview
-The Supplier Dashboard provides detailed insights into supplier relationships and performance within the supply chain network. It focuses on reliability, cost management, and supply chain integration.
 
-## Data Exploration and Visualization
+The Supplier Dashboard application provides insights into supply chain data using a temporal graph. It includes functionalities for visualization, queries, and performance evaluation.
 
-### **1. Supplier Schema**
-- Supplier network visualization
-- Connections to parts and warehouses
-- Attributes displayed:
-  - Supplier: Name, location, reliability, size
-  - Related Entities: Parts, warehouses
+---
 
-### **2. Performance Analysis**
-- Real-time reliability monitoring
-- Delivery performance visualization
-- Features:
-  - Quality metrics
-  - Lead time tracking
-  - Cost analysis
+### Visualization
 
-### **3. Supply Chain Management**
-- Parts availability tracking
-- Warehouse distribution
-- Lead time optimization
+- *Static Part Visualization*: Displays node and edge schema.
+- *Subgraph Visualization*: Provides detailed relationships of nodes using ego graphs.
 
-### **4. Cost Management**
-- Price trend analysis
-- Volume discount tracking
-- Cost comparison tools
+---
+
+## Query Functions
+
+### 1. Supplier Reliability and Costing Analysis
+
+Filters suppliers based on reliability thresholds and maximum transportation cost.
+
+*Parameters:*
+- reliability_threshold: Minimum acceptable reliability.
+- max_transportation_cost: Maximum transportation cost.
+
+### 2. Lead Time Query
+
+Finds the lead time between a supplier and a warehouse.
+
+*Parameters:*
+- supplier_id: ID of the supplier.
+- warehouse_id: ID of the warehouse.
+
+### 3. Suppliers by Part Type
+
+Identifies suppliers based on a specified part type.
+
+*Parameters:*
+- part_type: Type of part supplied by suppliers.
+
+### 4. Unused Suppliers
+
+Lists suppliers with no active edges in the graph.
+
+### 5. Supplier-Product Offering Association
+
+Analyzes product offerings associated with suppliers through their relationships with warehouses and facilities.
+
+---
 
 ## Code Structure
 
-### **1. Utility Functions**
-- Performance tracking
-- Cost analysis
-- Supply chain monitoring
-- Visualization tools
+### Utility Functions
 
-### **2. Streamlit Components**
-- Supplier selectors
-- Performance displays
-- Network visualizations
+*Graph Creation*: Generates a graphical representation of the node and edge schema.
 
-### **3. Main Function**
-- Dashboard setup
-- Data synchronization
-- User interface management
+*Visualization Functions:* Choropleth maps for supplier distribution. Bar charts for item frequency.
+
+### Streamlit Fragments
+
+- **node_details_input**: Collects user inputs to display node details.
+- **queries**: Allows users to perform supplier-based queries.
+
+### Main Function
+
+The main entry point for the application. Includes sections for:
+
+    - Static Part Visualization.
+    - Node Details Input.
+    - Query Execution.
+
+---
 
 ## Usage Instructions
-1. Select specific suppliers for analysis
-2. Monitor performance metrics
-3. Track cost and pricing
-4. View supply chain relationships
+
+1. Run the script using Streamlit: streamlit run main.py.
+2. Interact with the dashboard to explore supplier-related data.
+3. Perform queries to retrieve specific insights.
+
+---
 
 ## Performance Considerations
-- Real-time data updates
-- Efficient performance tracking
-- Response time optimization
+
+- Minimize complex queries on large graphs.
+- Monitor memory usage with large datasets to avoid crashes.
+---
 
 ## Dependencies
-- Streamlit: User interface
-- NetworkX: Relationship mapping
-- Plotly: Interactive charts
-- Matplotlib: Static visualizations
-- Tracemalloc: Performance tracking
+
+- Python Libraries: streamlit, json, plotly, pandas, networkx, requests
+- *Version Requirements:* Ensure compatible versions of libraries are installed.
+
+
+---
 
 ## Recommended Improvements
-- Advanced supplier rating system
-- Predictive performance analytics
-- Enhanced cost optimization
-- Real-time quality monitoring
+
+- Include advanced visualization options for better data exploration.
+- Add export functionality for query results.
+- Implement real-time data updates from external sources to improve insights.
