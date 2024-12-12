@@ -7,15 +7,14 @@ COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy .env.default as .env
-COPY .env.default .env
+RUN pip install --no-cache-dir mkdocs mkdocs-material
 
 # Copy the rest of the application
 COPY . .
 
-EXPOSE 8501
+# Build documentation
+RUN python -m mkdocs build
 
-HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+EXPOSE 8000
 
-ENTRYPOINT ["streamlit", "run", "main.py", "--server.address=0.0.0.0"]
+CMD ["python", "Main.py"]

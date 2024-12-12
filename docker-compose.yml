@@ -4,9 +4,10 @@ services:
   streamlit:
     build: .
     ports:
-      - "8504:8501"
+      - "8888:8501"
     volumes:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1
+      - DEBUG=False
     restart: unless-stopped
