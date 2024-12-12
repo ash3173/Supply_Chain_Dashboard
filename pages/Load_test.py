@@ -273,29 +273,47 @@ class QueryUser(HttpUser):
         except Exception as e:
             self.log_event("Supplier", "sup_queries", start_time, exception=e)
 
+import subprocess
+import time
+import streamlit as st
+
 def load_test_page():
+    # Page Title
     st.title("Load Test with Locust")
     
-    if st.button("Run Load Test"):
-        with st.spinner("Starting Locust..."):
-            process = subprocess.Popen(["locust", "-f", r"C:\Users\HP\LAM_VS\Dashboard3\Supply_Chain_Dashboard\pages\Load_test.py"])
-            
-            st.session_state["locust_process"] = process
-            st.success("Locust is starting. Please wait...")
-            
-            if process.poll() is None:
-                st.success("Locust is running. You can access the web interface at http://localhost:8089")
-            else:
-                st.error("Failed to start Locust.")
-    
-    if "locust_process" in st.session_state and st.button("Kill Locust Process"):
-        locust_process = st.session_state["locust_process"]
-        locust_process.terminate()
-        st.success("Locust process terminated.")
-    
-    st.write("Once the Locust server is running, you can access the web interface at:")
+    # Display Instructions
+    st.write("Use this page to run and monitor load tests using Locust.")
+    st.write("Once Locust starts, you can access the web interface at:")
     st.code("http://localhost:8089")
-    st.write("Use the web interface to start and monitor your load tests.")
+    
+    # Initialize Streamlit session state for the subprocess
+    if "locust_running" not in st.session_state:
+        st.session_state.locust_running = False
+
+    # Run Locust when the button is clicked
+    if st.button("Run Load Test"):
+        if not st.session_state.locust_running:
+            with st.spinner("Starting Locust..."):
+                try:
+                    process = subprocess.Popen(
+                        ["locust", "-f", r"D:\Class Textbook\Sem5\Querying\Supply_Chain_Dashboard\pages\Load_test.py"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                    )
+                    time.sleep(2)  # Allow time for Locust to initialize
+                    if process.poll() is None:  # Check if the process is still running
+                        st.session_state.locust_running = True
+                        st.success("Locust is running! Access it at: http://localhost:8089")
+                    else:
+                        st.error("Failed to start Locust. Check the logs for details.")
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
+        else:
+            st.warning("Locust is already running!")
+
+    # Display Locust status
+    if st.session_state.locust_running:
+        st.info("Locust is currently running. Access the web interface at http://localhost:8089")
 
 if __name__ == "__main__":
     load_test_page()

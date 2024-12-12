@@ -2,7 +2,8 @@ import networkx as nx
 import plotly.graph_objects as go
 import streamlit as st
 import numpy as np
-
+import pandas as pd
+from utils import time_and_memory_streamlit
 
 # final function to visualize the graph
 def plotly_ego_graph(G):
@@ -228,6 +229,7 @@ def plotly_ego_graph(G):
 #     return fig
 
 
+@time_and_memory_streamlit
 def ego_graph_query(graph, node_id, radius):
     """
     Returns the ego graph for a specific node within a given radius.
@@ -235,32 +237,37 @@ def ego_graph_query(graph, node_id, radius):
     ego_graph = nx.ego_graph(graph, node_id, radius=radius,undirected=True)
     return ego_graph
 
-
+@time_and_memory_streamlit
 def node_details_query(graph, node_id):
     """
     Returns the details of a specific node in the graph.
     """
     node_data = graph.nodes[node_id]
-    return node_data
+    # Create a DataFrame without an index
+    df = pd.DataFrame({"Attribute": node_data.keys(), "Value": node_data.values()})
+    return df
 
 
+@time_and_memory_streamlit
 def retrieve_edge_attributes(graph, node_id):
     """
-    Returns all edges connected to the given node along with their attributes.
+    Returns a DataFrame of all edges connected to the given node along with their attributes.
     """
     edges = []
     for neighbor in graph.neighbors(node_id):
         if graph.has_edge(node_id, neighbor):
             edge_attributes = graph.get_edge_data(node_id, neighbor)
+            # Flattening the attributes for better readability in the DataFrame
             edges.append({
-                "from": node_id,
-                "to": neighbor,
-                "attributes": edge_attributes
+                "From": node_id,
+                "To": neighbor,
+                **edge_attributes  # Add individual attribute keys as columns
             })
-    return edges
+    # Convert to DataFrame
+    return pd.DataFrame(edges)
 
-
-def find_shortest_path(graph, source, destination):
+@time_and_memory_streamlit
+def find_shortest_path(directed_graph, source, destination):
     """
     Finds the shortest path between source and destination nodes and visualizes the path.
 
@@ -272,10 +279,12 @@ def find_shortest_path(graph, source, destination):
     Returns:
         tuple: Shortest path, length, and Plotly figure.
     """
+    graph = directed_graph.to_undirected()
     try:
         # Find the shortest path and its length
-        path = nx.shortest_path(graph, source=source, target=destination, weight="weight")
-        length = nx.shortest_path_length(graph, source=source, target=destination, weight="weight")
+        path = nx.shortest_path(graph, source=source, target=destination)
+        
+        length = nx.shortest_path_length(graph, source=source, target=destination)
 
         # Create a subgraph containing only the shortest path
         path_edges = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
@@ -349,7 +358,7 @@ def find_shortest_path(graph, source, destination):
             xaxis=dict(showgrid=False, zeroline=False),
             yaxis=dict(showgrid=False, zeroline=False),
             height=500,
-            width=700
+            width=900
         )
 
         return path, length, fig
@@ -359,7 +368,7 @@ def find_shortest_path(graph, source, destination):
     except nx.NodeNotFound as e:
         return str(e), None, None
 
-
+@time_and_memory_streamlit
 def get_ancestors_descendants(graph, node_id):
     if not isinstance(graph, nx.DiGraph):
         raise TypeError("The graph must be a directed graph (nx.DiGraph).")
@@ -373,30 +382,60 @@ def get_ancestors_descendants(graph, node_id):
     # Get descendants
     descendants = list(nx.descendants(graph, node_id))
 
-    return ancestors, descendants
+    return pd.DataFrame(ancestors,columns=["Ancestors"]), pd.DataFrame(descendants,columns=["Descendants"])
 
 
 def main():
+    st.markdown("""
+    <style>
+        /* Remove blank space at top and bottom */
+        .block-container {
+            padding-top: 1rem; /* Add some padding to avoid cutting off the title */
+            padding-bottom: 0rem;
+        }
+
+        /* Adjust canvas positioning */
+        .st-emotion-cache-z5fcl4 {
+            position: relative;
+            top: -30px; /* Adjusted to avoid cutting the title */
+        }
+
+        /* Toolbar transparency and content accessibility */
+        .st-emotion-cache-18ni7ap {
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0%); /* Use correct rgba syntax for transparency */
+        }
+        .st-emotion-cache-zq5wmm {
+            pointer-events: auto;
+            background: rgb(255, 255, 255);
+            border-radius: 5px;
+        }
+        
+    </style>
+    """, unsafe_allow_html=True)
 
     if "temporal_graph" not in st.session_state:
         st.error("No Temporal Graph found in the session state. Please run the main script first.")
         return
-
+    st.title("Structure Based Queries")
     st.markdown("""
-            ## Select Query to Execute :
+            #### Select Query to Execute :
         """)
-    
-    timestamp = st.select_slider("Select Timestamp", options=range(len(st.session_state.temporal_graph.files)))
+    cols1,cols2=st.columns([2,1])
+    with cols2:
+        timestamp = st.select_slider("Select Timestamp", options=range(len(st.session_state.temporal_graph.files)))
     
     graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
     all_nodes = list(graph.nodes)
 
-    # Dropdown to select query
-    query_type = st.selectbox("Choose Query", ["Ego Graph", "Node Details", "Edge Attributes","Shortest Path", "Ancestors and Descendants"])
+    with cols1:
+        # Dropdown to select query
+        query_type = st.selectbox("Choose Query", ["Select","Ego Graph", "Node Details", "Edge Attributes","Shortest Path", "Ancestors and Descendants"])
 
     # Execute the chosen query
     if query_type == "Ego Graph":
-        node_id = st.selectbox("Select Node ID for Ego Graph", all_nodes)
+        with cols1:
+            node_id = st.selectbox("Select Node ID for Ego Graph", all_nodes)
         radius = st.slider("Select Radius for Ego Graph", 1, 5, 2)  # Slider for radius
 
         # Generate the ego graph using the selected node and radius
@@ -410,23 +449,26 @@ def main():
             st.plotly_chart(fig)  # Display the figure in Streamlit
 
     elif query_type == "Node Details":
-        node_id = st.selectbox("Select Node ID for Node Details", all_nodes)
-        node_data = node_details_query(graph, node_id)
-        st.json(node_data)
+        with cols1:
+            node_id = st.selectbox("Select Node ID for Node Details", all_nodes)
+            node_data = node_details_query(graph, node_id)
+            st.table(node_data)
     
     elif query_type == "Edge Attributes":
-        node_id = st.selectbox("Select Node ID to Retrieve Edge Attributes", all_nodes)
-        if node_id:
-            edge_attributes = retrieve_edge_attributes(graph, node_id)
-            if edge_attributes:
-                st.write(f"Edges connected to Node {node_id}:")
-                st.json(edge_attributes)
-            else:
-                st.warning(f"No edges found for Node {node_id}.")
+        with cols1:
+            node_id = st.selectbox("Select Node ID to Retrieve Edge Attributes", all_nodes)
+            if node_id:
+                edge_attributes = retrieve_edge_attributes(graph, node_id)
+                if not edge_attributes.empty:
+                    st.write(f"Edges connected to Node {node_id}:")
+                    st.table(edge_attributes)
+                else:
+                    st.warning(f"No edges found for Node {node_id}.")
     
     elif query_type == "Shortest Path":
-        source_node = st.text_input("Enter Source Node ID", "BG_001")
-        destination_node = st.text_input("Enter Destination Node ID", "BG_010")
+        with cols1:
+            source_node = st.selectbox("Enter Source Node ID", all_nodes)
+            destination_node = st.selectbox("Enter Destination Node ID", all_nodes)
 
 
         if st.button("Find Shortest Path"):
@@ -448,23 +490,36 @@ def main():
                 st.error("Please enter valid source and destination nodes.")
     
     elif query_type == "Ancestors and Descendants":
-        node_id = st.selectbox("Enter Node ID to Retrieve Ancestors and Descendants", all_nodes)
-        if node_id:
-            try:
-                if node_id not in graph.nodes:
-                    raise ValueError(f"Node '{node_id}' does not exist in the graph.")
-                ancestors, descendants = get_ancestors_descendants(graph, node_id)
+        with cols1:
 
-                st.subheader(f"Results for Node: {node_id}")
-                st.write(f"**Ancestors ({len(ancestors)}):**")
-                st.write(ancestors if ancestors else "No ancestors found.")
-                st.write(f"**Descendants ({len(descendants)}):**")
-                st.write(descendants if descendants else "No descendants found.")
+            node_id = st.selectbox("Enter Node ID to Retrieve Ancestors and Descendants", all_nodes)
+            if node_id:
+                try:
+                    if node_id not in graph.nodes:
+                        raise ValueError(f"Node '{node_id}' does not exist in the graph.")
+                    ancestors, descendants = get_ancestors_descendants(graph, node_id)
 
-            except ValueError as e:
-                st.error(str(e))
-            except Exception as e:
-                st.error(f"An unexpected error occurred: {str(e)}")
+                    st.subheader(f"Results for Node: {node_id}")
+                    st.write(f"**Ancestors ({len(ancestors)}):**")
+                    if not ancestors.empty:
+                        st.dataframe(ancestors)
+                    else:
+                        st.info("No ancestors were found.")
+                    if not descendants.empty:
+                        st.dataframe(descendants)
+                    else:
+                        st.info("No descendants were found.")
+                    
+
+                except ValueError as e:
+                    st.error(str(e))
+                except Exception as e:
+                    st.error(f"An unexpected error occurred: {str(e)}")
+
+    st.text(" ")  # Adds one blank line
+    st.text(" ")  # Adds another blank line
+
+    st.divider()  # Adds a horizontal divider (thin line), visually separating sections
 
 if __name__ == "__main__":
     main()
