@@ -340,10 +340,10 @@ def query_valid_parts_nx(timestamp, start_date: str, end_date: str):
     
     # Display the results in a container in Streamlit
     if valid_parts_details:
-        with st.container(height=300):
-            st.write(f"Found {len(valid_parts_details)} valid parts within the date range:")
-            for part in valid_parts_details:
-                st.write(f"Part ID: {part['part_id']} is  valid till {part['valid_till']}")
+        
+        st.write(f"Found {len(valid_parts_details)} valid parts within the date range.")
+        result = pd.DataFrame(valid_parts_details, columns=['part_id', 'valid_till'])
+        st.dataframe(result)
     else:
         st.write("No valid parts found for the given date range.")
 

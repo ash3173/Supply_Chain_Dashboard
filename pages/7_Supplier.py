@@ -38,7 +38,6 @@ def static_part():
 
     with col3:
         st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
-# Define the function to query lead time
 @time_and_memory_streamlit
 def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_id):
     if G.has_edge(supplier_id, warehouse_id):
@@ -55,9 +54,7 @@ def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_i
 def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost):
     suppliers = []
 
-    # Iterate through edges and check if they belong to SUPPLIERSToWAREHOUSE relationship
     for u, v, data in graph.edges(data=True):
-        # Check if the edge type matches SUPPLIERSToWAREHOUSE
         if data.get("relationship_type") == "SUPPLIERSToWAREHOUSE":
             transportation_cost = data.get("transportation_cost", 0)
             
@@ -193,6 +190,7 @@ def node_details_input():
 
 @st.fragment
 @time_and_memory_streamlit
+@st.cache_data
 def node_details(node_index, sup_id,timestamp):
     col1, col2 = st.columns(2)
     with col1:
@@ -243,16 +241,16 @@ def node_details(node_index, sup_id,timestamp):
             table_rows = ""
             for index, (attr, icon) in enumerate(attributes):
                 value = node_data[index] if index < len(node_data) else "N/A"
-                if attr == "Supplied Part Types":
-                        # Convert the list of supplied parts to a comma-separated string
+                # if attr == "Supplied Part Types":
+                #         # Convert the list of supplied parts to a comma-separated string
             
-                        types=", ".join(value) 
-                        if not types:
-                            types="N/A"
+                #         types=", ".join(value) 
+                #         if not types:
+                #             types="N/A"
                         
-                        table_rows += f"<tr><td>{icon} {attr}:</td><td>{types}</td></tr>"
-                else:
-                    table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
+                #         table_rows += f"<tr><td>{icon} {attr}:</td><td>{types}</td></tr>"
+                # else:
+                table_rows += f"<tr><td>{icon} {attr}:</td><td>{value}</td></tr>"
 
             st.markdown(
                     f"""
@@ -423,13 +421,12 @@ def get_visualization(data):
     )
     )
 
-    # Create the bar chart with blue color
+    
     df = pd.DataFrame.from_dict(items_freq, orient='index', columns=['Frequency'])
     df = df.reset_index().rename(columns={'index': 'Item'})
     fig2 = px.bar(df, x='Item', y='Frequency', title='Number of suppliers per item')
     fig2.update_traces(marker_color='#ADD8E6')
 
-    # Center the title
     fig2.update_layout(
         title=dict(
             text='Number of suppliers per item',

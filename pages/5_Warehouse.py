@@ -214,6 +214,7 @@ def node_details_input():
 
 @st.fragment
 @time_and_memory_streamlit
+@st.cache_data
 def node_details(node_index, war_id,timestamp):
     col1, col2 = st.columns(2)
     with col1:
@@ -572,7 +573,7 @@ def find_warehouses_by_storage_cost(graph):
                 "Location": data.get("location", "Unknown"),
             })
 
-    warehouse_df = pd.DataFrame(warehouse_cost_data).sort_values(by="Total Storage Cost", ascending=True)
+    warehouse_df = pd.DataFrame(warehouse_cost_data).sort_values(by="Total Storage Cost", ascending=False)
     return warehouse_df
 
 @st.fragment
@@ -587,7 +588,7 @@ def queries():
                                                     "Find Suppliers Supplying to a Warehouse",
                                                     "Find Parts in Warehouse", 
                                                     # "Find Warehouses Below Safety Stock",
-                                                    "Find Warehouses by Storage Cost"])
+                                                    "Sort Warehouses by Storage Cost"])
         if query_option=="Check available units":
         
             po_ids = st.session_state.temporal_graph.create_node_type_index(0)["PRODUCT_OFFERING"]
@@ -645,7 +646,7 @@ def queries():
                 else:
                     st.write("No warehouse found below safety stock.")
 
-        elif query_option == "Find Warehouses by Storage Cost":
+        elif query_option == "Sort Warehouses by Storage Cost":
             if st.button("Find Warehouses"):
                 graph = st.session_state.temporal_graph.load_graph_at_timestamp(timestamp)
                 result = find_warehouses_by_storage_cost(graph)

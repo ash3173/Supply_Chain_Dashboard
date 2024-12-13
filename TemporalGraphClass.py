@@ -60,7 +60,7 @@ class TemporalGraphClass:
         for node_type, nodes in node_values.items():
             node_type_index[node_type] = {}
             for node in nodes:
-                node_id = node[-1]  # Assuming the last element is the node ID
+                node_id = node[-1] 
                 node_type_index[node_type][node_id] = node
 
         return node_type_index

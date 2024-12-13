@@ -57,7 +57,6 @@ def create_graph():
         "PARTSToFACILITY": ["relationship_type", "quantity", "distance", "transport_cost", "lead_time", "source", "target"]
     }
 
-    # Create a new figure
     fig = go.Figure()
 
     # Define node positions
@@ -108,15 +107,15 @@ def create_graph():
             x=0.5, xanchor='center', yanchor='top'
         ),
         height=400,
-        width=500,  # Adjust width for a tighter fit
-        margin=dict(l=20, r=20, t=40, b=20),  # Minimized margins
+        width=500,  
+        margin=dict(l=20, r=20, t=40, b=20),  
         xaxis=dict(
             showgrid=False, zeroline=False, showticklabels=False,
-            range=[-0.2, 1.2]  # Adjust x-axis range to fit nodes snugly
+            range=[-0.2, 1.2]  
         ),
         yaxis=dict(
             showgrid=False, zeroline=False, showticklabels=False,
-            range=[-0.6, 0.4]  # Adjust y-axis range to fit nodes snugly
+            range=[-0.6, 0.4]  
         ),
         showlegend=False,
         font=dict(color="white", size=10),
@@ -186,7 +185,6 @@ def create_facility_map(facility_nodes):
     # Create the figure
     fig = go.Figure()
 
-    # Add traces for each warehouse type (initially hidden except 'lam')
     for facility_type, trace in traces.items():
         visible = True if facility_type == "lam" else False
         fig.add_trace(trace)
@@ -301,6 +299,7 @@ def node_details_input():
 
 @st.fragment
 @time_and_memory_streamlit
+@st.cache_data
 def node_details(node_index, facility_id,timestamp):
     col1, col2 = st.columns(2)
     with col1:
@@ -346,7 +345,6 @@ def node_details(node_index, facility_id,timestamp):
             </style>
             """, unsafe_allow_html=True)
 
-            # Ensure node_data is a list and extract values based on their order
             table_rows = ""
             for index, (attr, icon) in enumerate(attributes):
                 value = node_data[index] if index < len(node_data) else "N/A"
@@ -408,16 +406,16 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
         # Hide the axis
         ax.axis('off')
 
-    # Adjust spacing between the plots
-    plt.subplots_adjust(hspace=-0.4)  # Reduce the gap between subplots
+    plt.subplots_adjust(hspace=-0.4) 
     
     # Adjust the figure to remove space around the subplots and move everything up
-    fig.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05)  # Increase the top margin and reduce the bottom margin to move up
+    fig.subplots_adjust(left=0, right=1, top=0.95, bottom=0.05)  
 
 
     return fig
 
 @time_and_memory_streamlit
+@st.cache_data
 def find_product_offerings_under_threshold(data, threshold_operating_cost):
     product_offerings = []
     highest_operating_cost = 0
@@ -473,13 +471,11 @@ def find_all_parts_required_in_facility(data):
         parts_list = ", ".join(parts)
         table_data.append([facility_name, parts_list])
 
-    # Create a DataFrame from the table data (optional: if you prefer using pandas)
     
     df = pd.DataFrame(table_data, columns=["Facility", "Parts"])
 
 
     st.dataframe(df)
-    # Optionally return the dataframe if you need it for further processing
     return df
 
 
@@ -615,10 +611,10 @@ def main():
     st.divider()
 
     queries()
-    st.text(" ")  # Adds one blank line
-    st.text(" ")  # Adds another blank line
+    st.text(" ") 
+    st.text(" ")  
 
-    st.divider()  # Adds a horizontal divider (thin line), visually separating sections
+    st.divider() 
     
 if __name__ == "__main__":
     main()
