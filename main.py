@@ -41,7 +41,7 @@ get_live_data = f"{base_url}/live/schema/{version}"
 data_folder = "data"
 
 
-@st.cache_data
+
 def check_units_available_in_warehouse(data,graph,product_id,product_id_node) :
 
     in_edges = graph.in_edges(product_id_node[0],data=True)
@@ -70,7 +70,7 @@ def check_units_available_in_warehouse(data,graph,product_id,product_id_node) :
     # st.write(warehouses)
     return [available,warehouses]
 
-@st.cache_data
+
 def find_facilty_making_product(graph,product_id,product_id_node) :
     in_edges = graph.in_edges(product_id_node[0],data=True)
     facility = []
@@ -81,7 +81,7 @@ def find_facilty_making_product(graph,product_id,product_id_node) :
 
     return facility
 
-@st.cache_data
+
 def find_raw_materials_to_make_product(data,facility) :
     raw_materials = {}
     facility_to_parts = data["link_values"]["PARTSToFACILITY"]
@@ -92,7 +92,7 @@ def find_raw_materials_to_make_product(data,facility) :
 
     return raw_materials
 
-@st.cache_data
+
 def find_total_cost(raw_materials,needed_units) :
     for key, values in raw_materials.items():
         raw_materials[key] = [math.ceil(value * needed_units) for value in values]
@@ -100,7 +100,7 @@ def find_total_cost(raw_materials,needed_units) :
 
     return raw_materials
 
-@st.cache_data
+
 def calulate_cost_and_time(data,total,facility) :
     cost = 0
     time = 0
@@ -116,7 +116,7 @@ def calulate_cost_and_time(data,total,facility) :
 
     return cost,time
 
-@st.cache_data
+
 def check_warehouse_have_enough_raw_material(data,raw_materials) :
     warehouse = data["link_values"]["WAREHOUSEToPARTS"]
     all_raw_materials = {}
@@ -135,7 +135,7 @@ def check_warehouse_have_enough_raw_material(data,raw_materials) :
     return [True,all_raw_materials]
 
 # need to change
-@st.cache_data
+
 def get_supplier_for_raw_material(data,raw_materials) :
     path = "suppliers_parts_data_unused.json"
     with open(path,'r') as f : 
@@ -186,7 +186,7 @@ def get_supplier_for_raw_material(data,raw_materials) :
     return raw_materials
 
 
-@st.cache_data
+
 def supply_chain_query(data,graph,product_id,units,product_id_node) :
 
     warehouse_containing_product_id,warehouse_data = check_units_available_in_warehouse(data,graph,product_id,product_id_node)
@@ -220,7 +220,7 @@ def supply_chain_query(data,graph,product_id,units,product_id_node) :
             return [3,supplier_data] # 3 - Demand can't be satisfied as not enough parts to make new products
 
 
-@st.cache_data
+
 def count_connections_and_find_max_nodes(data):
    connection_counts = {}
   
@@ -306,7 +306,7 @@ def count_connections_and_find_max_nodes(data):
   
    return grouped_nodes, max_connections_nodes, max_connections
 
-@st.cache_data
+
 def display_node_boxes(df):
     # split cols into 2 , 2 ,3
     col1 , col2 = st.columns(2)
@@ -388,7 +388,7 @@ def display_node_boxes(df):
             </main>
         """, unsafe_allow_html=True)
   
-@st.cache_data
+
 def convert_json_to_graph(data):
     graph = nx.DiGraph()
 

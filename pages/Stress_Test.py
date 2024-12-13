@@ -140,7 +140,7 @@ class PageStressTester:
        
        end_time = time.time()
        current, peak = tracemalloc.get_traced_memory()
-       cpu_usage = process.cpu_percent() - initial_cpu
+       cpu_usage = process.cpu_percent()/psutil.cpu_count()
        tracemalloc.stop()
        
        return {
@@ -181,7 +181,7 @@ class PageStressTester:
        
        end_time = time.time()
        current, peak = tracemalloc.get_traced_memory()
-       cpu_usage = process.cpu_percent() - initial_cpu
+       cpu_usage = process.cpu_percent()/psutil.cpu_count()
        tracemalloc.stop()
        
        return {

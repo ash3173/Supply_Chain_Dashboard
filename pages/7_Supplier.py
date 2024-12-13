@@ -54,9 +54,7 @@ def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_i
 def supplier_reliability_costing_temporal(graph, timestamp, reliability_threshold, max_transportation_cost):
     suppliers = []
 
-    # Iterate through edges and check if they belong to SUPPLIERSToWAREHOUSE relationship
     for u, v, data in graph.edges(data=True):
-        # Check if the edge type matches SUPPLIERSToWAREHOUSE
         if data.get("relationship_type") == "SUPPLIERSToWAREHOUSE":
             transportation_cost = data.get("transportation_cost", 0)
             
