@@ -5,11 +5,17 @@ This endpoint retrieves information about suppliers and their associated parts.
 ## Endpoint
 
 ```
-GET /supplier-data
+GET api/dicts/{version}/{type}/{timestamp}
 ```
 
 ## Parameters
-No parameters required.
+
+| Parameter | Type   | Description                    | Required |
+|-----------|--------|--------------------------------|----------|
+| version   | string | Version identifier of the schema| Yes      |
+| type      | string | Type of data (e.g., SUPPLIERS_PARTS) | Yes      |
+| timestamp | int    | Timestamp of the schema        | Yes      |
+
 
 ## Response Format
 
@@ -20,7 +26,12 @@ The response is a JSON object mapping suppliers to their available parts.
 ```python
 import requests
 
-response = requests.get("/supplier-data")
+version = "sample_version"
+timestamp = 1
+type = "SUPPLIERS_PARTS"
+get_supplier_data = f"/api/dicts/{version}/{type}/{timestamp}"
+
+response = requests.get(get_supplier_data)
 supplier_data = response.json()
 ```
 
