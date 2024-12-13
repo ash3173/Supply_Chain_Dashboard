@@ -91,6 +91,7 @@ def node_details_input():
     
 @st.fragment
 @time_and_memory_streamlit
+@st.cache_data
 def node_details(node_index, business_group_id,timestamp):
     col1, col2 = st.columns(2)
     with col1:

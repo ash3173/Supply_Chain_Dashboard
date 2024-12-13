@@ -277,17 +277,19 @@ def display_comprehensive_metrics(metrics):
 def main():
     st.title("Stress Test")
     # Configuration section
-    col1, col2, col3 = st.columns(3)
+    col1, col3 = st.columns([3,1])
 
     with col1:
         total_cores = multiprocessing.cpu_count()
-        num_cores = st.selectbox(
-            "Select number of CPU cores",
-            options=range(1, total_cores + 1),
-            help="Select number of cores for testing"
-        )
+        # num_cores = st.selectbox(
+        #     "Select number of CPU cores",
+        #     options=range(1, total_cores + 1),
+        #     help="Select number of cores for testing"
+        # )
+        num_cores=1
+        st.info("Single core CPU stress testing.")
 
-    with col2:
+    with col1:
         available_pages = ["Business Group", "Facility", "Parts", "Product Family", "Product Offering", "Warehouse", "Supplier"]
         selected_page = st.selectbox(
             "Select a page to test",

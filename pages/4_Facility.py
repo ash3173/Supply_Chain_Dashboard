@@ -299,6 +299,7 @@ def node_details_input():
 
 @st.fragment
 @time_and_memory_streamlit
+@st.cache_data
 def node_details(node_index, facility_id,timestamp):
     col1, col2 = st.columns(2)
     with col1:
@@ -414,6 +415,7 @@ def plot_average_operating_cost(operating_cost1, identifier1, operating_cost2, i
     return fig
 
 @time_and_memory_streamlit
+@st.cache_data
 def find_product_offerings_under_threshold(data, threshold_operating_cost):
     product_offerings = []
     highest_operating_cost = 0
