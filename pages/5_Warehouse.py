@@ -583,7 +583,8 @@ def queries():
     with cols2:
         timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
     with cols1:
-        query_option = st.selectbox("Choose Query", ["Select", "Check available units","Find Suppliers Supplying to a Warehouse",
+        query_option = st.selectbox("Choose Query", ["Select", "Check available units",
+                                                    "Find Suppliers Supplying to a Warehouse",
                                                     "Find Parts in Warehouse", 
                                                     # "Find Warehouses Below Safety Stock",
                                                     "Find Warehouses by Storage Cost"])
