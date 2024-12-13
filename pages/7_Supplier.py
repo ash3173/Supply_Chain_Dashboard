@@ -38,7 +38,6 @@ def static_part():
 
     with col3:
         st.plotly_chart(fig2, use_container_width=True)  # Display figure 2
-# Define the function to query lead time
 @time_and_memory_streamlit
 def query_lead_time_supplier_to_warehouse(G, timestamp, supplier_id, warehouse_id):
     if G.has_edge(supplier_id, warehouse_id):
@@ -423,13 +422,12 @@ def get_visualization(data):
     )
     )
 
-    # Create the bar chart with blue color
+    
     df = pd.DataFrame.from_dict(items_freq, orient='index', columns=['Frequency'])
     df = df.reset_index().rename(columns={'index': 'Item'})
     fig2 = px.bar(df, x='Item', y='Frequency', title='Number of suppliers per item')
     fig2.update_traces(marker_color='#ADD8E6')
 
-    # Center the title
     fig2.update_layout(
         title=dict(
             text='Number of suppliers per item',

@@ -15,7 +15,6 @@ def time_and_memory_streamlit(func):
         start_time = time.time()
 
         try:
-            # Call the actual function
             result = func(*args, **kwargs)
         finally:
             # Calculate memory and time usage

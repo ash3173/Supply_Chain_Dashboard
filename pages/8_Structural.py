@@ -73,7 +73,7 @@ def plotly_ego_graph(G):
             hoverinfo="none",
             mode="lines",
             name="Connections",
-            opacity=0.7,  # Increased opacity for better visibility
+            opacity=0.7,  
         )
         traces.append(edge_trace)
 
@@ -105,9 +105,7 @@ def plotly_ego_graph(G):
                     hover_text += f"Incoming: {in_degree}<br>"
                     hover_text += f"Outgoing: {out_degree}"
 
-                    # Add additional node attributes if they exist
-                    # node_data = G.nodes[node]
-                    # st.write(G.nodes[node])
+                    
                     for key, value in G.nodes[node].items():
                         if (
                             key != "node_type"
@@ -516,10 +514,10 @@ def main():
                 except Exception as e:
                     st.error(f"An unexpected error occurred: {str(e)}")
 
-    st.text(" ")  # Adds one blank line
-    st.text(" ")  # Adds another blank line
+    st.text(" ")  
+    st.text(" ")  
 
-    st.divider()  # Adds a horizontal divider (thin line), visually separating sections
+    st.divider()  
 
 if __name__ == "__main__":
     main()

@@ -23,8 +23,8 @@ st.set_page_config(
 # getdata = f"{base_url}/archive/schema/{version}"
 # getTimestamp = f"{base_url}/archive/schema/{version}"
 
-# base_url = "http://172.17.149.238/api"
-base_url = "https://viable-informally-alpaca.ngrok-free.app/api"
+base_url = "http://172.17.149.238/api"
+# base_url = "https://viable-informally-alpaca.ngrok-free.app/api"
 # version = "NSS_1000_12_Simulation" 
 version = "simulation_exports"
 # version = "simulation_exports_10000_50"
@@ -40,8 +40,6 @@ get_live_data = f"{base_url}/live/schema/{version}"
 
 data_folder = "data"
 
-# Streamlit app starts here
-# main for running from server
 
 def check_units_available_in_warehouse(data,graph,product_id,product_id_node) :
 
@@ -246,9 +244,15 @@ def count_connections_and_find_max_nodes(data):
                if target not in connection_counts:
                    connection_counts[target] = {"outgoing": 0, "incoming": 0}
                connection_counts[target]["incoming"] += 1
-   
-   # Calculate degree centrality
-   degree_centrality = {node: counts["outgoing"] + counts["incoming"]
+    
+#    # Calculate degree centrality
+#    graph = st.session_state.temporal_graph.load_graph_at_timestamp(0)
+#    n = len(graph.nodes())
+#    # Calculate degree centrality
+#    degree_centrality = {node:round((counts["outgoing"] + counts["incoming"]) / (n-1),3)
+#                        for node, counts in connection_counts.items()}
+
+   degree_centrality = {node:(counts["outgoing"] + counts["incoming"])
                        for node, counts in connection_counts.items()}
   
    # Group nodes by type
@@ -477,7 +481,7 @@ def main():
     
 
     all_files.sort(key=lambda x: int(x.split("\\")[-1].split(".")[0]))
-    #all_files.sort(key=lambda x: int(x.split("/")[-1].split(".")[0]))
+    #all_files.sort(key=lambda x: int(x.split("/")[-1].split(".")[0])) # for linux
 
     # Initialize TemporalGraph
     temporal_graph = TemporalGraphClass(all_files)
@@ -506,7 +510,7 @@ def main():
         unsafe_allow_html=True,
     )
 
-# Use Streamlit's empty container to render content inside custom divs
+
     col1 , col2 = st.columns(2,gap="large")
 
     with col1:
@@ -552,7 +556,6 @@ def main():
         # st.markdown('<h2 class="custom-header">Graph Schema</h2>', unsafe_allow_html=True)
 
 
-        # Inject custom CSS to style the iframe and make it responsive
         st.markdown(
             """
             <style>
@@ -629,7 +632,6 @@ def main():
     with col2:
 
         if choice != 0:
-            # Handle the different cases returned by the query
             if choice == 1:
                 # st.write(f"## Inventory and Demand Status")
                 st.markdown(f"""
@@ -647,7 +649,6 @@ def main():
                 st.write("### Warehouse Details")
                 st.write(f"Below is the breakdown of available units for **{product_id}** across warehouses:")
 
-                # Preparing data for table display
                 warehouse_data = []
                 for warehouse, prop in supply_chain_data[1].items():
                     warehouse_data.append({
@@ -659,10 +660,8 @@ def main():
                         "Size": prop[3]
                     })
 
-                # Convert to DataFrame
                 warehouse_df = pd.DataFrame(warehouse_data)
 
-                # Display the table
                 st.dataframe(warehouse_df)
 
             elif choice == 2:
@@ -708,12 +707,10 @@ def main():
                     columns=["Quantity", "Cost", "Time (hours)"]
                 ).reset_index().rename(columns={"index": "Material"})
 
-                # Display the table
                 st.dataframe(raw_materials_df)
 
 
                 # st.write(f"### Manufacturing Cost and Time")
-                # Highlighting cost and time using HTML and Markdown
                 st.markdown(f"""
                 <div style="background-color: #f0f8ff; padding: 10px; border-radius: 5px;">
                     <h3 style="color: #ff4500; margin: 0;"> 💰 Total Cost to Manufacture: ${total_cost:,.2f}</h3>
@@ -775,9 +772,9 @@ def main():
                 #     st.write(supplier)  # Adjust based on your data structure
 
 
-    st.text(" ")  # Adds one blank line
-    st.text(" ")  # Adds another blank line
+    st.text(" ")  
+    st.text(" ")  
 
-    st.divider()  # Adds a horizontal divider (thin line), visually separating sections
+    st.divider()  
 if __name__ == "__main__":
     main()

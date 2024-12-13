@@ -296,7 +296,7 @@ def load_test_page():
             with st.spinner("Starting Locust..."):
                 try:
                     process = subprocess.Popen(
-                        ["locust", "-f", r"C:\Users\HP\LAM_VS\Dashboard3\Supply_Chain_Dashboard\pages\Load_test.py"],
+                        ["locust", "-f", r"D:\Class Textbook\Sem5\Querying\Supply_Chain_Dashboard\pages\Load_test.py"],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                     )

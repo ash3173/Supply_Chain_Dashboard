@@ -132,10 +132,10 @@ def static_part():
             ))
         fig_cost.update_layout( title=dict(
                                 text="Average Cost of Product Family Across Timestamps",
-                                x=0,         # Horizontal position of the title (0 = far left, 1 = far right, 0.5 = center)
-                                xanchor='left',  # Anchor the title to the center horizontally
-                                y=0.964,        # Vertical position of the title (1 = top, 0 = bottom)
-                                yanchor='top'   # Anchor the title to the top vertically
+                                x=0,         
+                                xanchor='left',  
+                                y=0.964,        
+                                yanchor='top'   
                             ),
                             xaxis_title="Timestamp",
                             height=400,
@@ -155,10 +155,10 @@ def static_part():
             ))
         fig_demand.update_layout(title=dict(
                                 text="Average Demand of Product Family Across Timestamps",
-                                x=0,         # Horizontal position of the title (0 = far left, 1 = far right, 0.5 = center)
-                                xanchor='left',  # Anchor the title to the center horizontally
-                                y=0.964,        # Vertical position of the title (1 = top, 0 = bottom)
-                                yanchor='top'   # Anchor the title to the top vertically
+                                x=0,         
+                                xanchor='left',  
+                                y=0.964,        
+                                yanchor='top'   
                                 ),
                                 height=400,
                                 width=600,
@@ -176,7 +176,6 @@ def node_details_input():
     with col1:
         
         po_index = st.session_state.temporal_graph.create_node_type_index(timestamp)["PRODUCT_OFFERING"]
-        # Heading for the Business Group Info
         st.write("### Product Offering Information Viewer")
         
         # Use the keys of the index dictionary directly
@@ -184,7 +183,6 @@ def node_details_input():
 
         # Create a selectbox using these keys
         po_id_input = st.selectbox("Choose Product Offering Id",all_po)
-    # Display node details if a valid business group is selected
     if po_id_input!="Select Product Offering":
         node_details(po_index, po_id_input,timestamp)
 
@@ -233,7 +231,6 @@ def node_details(node_index, po_id_input,timestamp):
             """, unsafe_allow_html=True)
 
 
-            # Ensure node_data is a list and extract values based on their order
             table_rows = ""
             for index, (attr, icon) in enumerate(attributes):
                 value = node_data[index] if index < len(node_data) else "N/A"
@@ -261,7 +258,7 @@ def node_details(node_index, po_id_input,timestamp):
 
             # Visualize and render the ego graph with Plotly
             fig = plotly_ego_graph(ego_graph)
-            st.plotly_chart(fig)  # Display the figure in Streamlit
+            st.plotly_chart(fig) 
 
 @st.fragment
 def queries():
@@ -279,8 +276,8 @@ def queries():
             with cols2:
                 timestamp = st.slider("Select Timestamp", 0, num_timestamps - 1, 0)
             # Query 1
-            demand_threshold = st.text_input("Enter Demand Threshold", "10")
-            cost_threshold = st.text_input("Enter Cost Threshold", "100")
+            demand_threshold = st.text_input("Enter Demand Threshold", "200")
+            cost_threshold = st.text_input("Enter Cost Threshold", "300000000")
 
             try:
                 demand_threshold = int(demand_threshold)
@@ -443,7 +440,6 @@ def create_graph():
         hovertext='<b>FACILITY</b><br>' + '<br>'.join(nodes["FACILITY"])
     ))
 
-    # Update layout for visibility
     fig.update_layout(
         title=dict(
             text="Product Offering Schema",
@@ -555,7 +551,7 @@ def query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp):
             attrs.get("relationship_type") == "FACILITYToPRODUCT_OFFERING"
             and v == product_offering_id
         ):
-            facility_name = G.nodes[u].get("name", u)  # Default to ID if name not present
+            facility_name = G.nodes[u].get("name", u)  
             product_cost = attrs.get("product_cost", 0)
             facility_costs[facility_name] = product_cost
 
@@ -566,7 +562,7 @@ def query_and_plot_costs_plotly(temporal_graph, product_offering_id, timestamp):
             attrs.get("relationship_type") == "WAREHOUSEToPRODUCT_OFFERING"
             and v == product_offering_id
         ):
-            warehouse_name = G.nodes[u].get("name", u)  # Default to ID if name not present
+            warehouse_name = G.nodes[u].get("name", u) 
             storage_cost = attrs.get("storage_cost", 0)
             warehouse_costs[warehouse_name] = storage_cost
 
@@ -660,8 +656,8 @@ def main():
 
     queries()
 
-    st.text(" ")  # Adds one blank line
-    st.text(" ")  # Adds another blank line
+    st.text(" ")  
+    st.text(" ")  
 
     st.divider() 
       
