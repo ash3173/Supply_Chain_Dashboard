@@ -477,7 +477,7 @@ def check_units_available_in_warehouse(graph, product_id):
             warehouse_info.append(f"{warehouse}: {round(inventory)} units")
         warehouse_list = pd.DataFrame([{'Warehouse': w.split(': ')[0], 'Units': int(w.split(': ')[1].replace(' units', ''))} for w in warehouse_info])
         st.write(f"The following warehouses have the product with ID '{product_id}' available:")
-        st.table(warehouse_list)
+        st.dataframe(warehouse_list)
         return
     else:
         st.write(f"No warehouses found with the product with ID '{product_id}'.")

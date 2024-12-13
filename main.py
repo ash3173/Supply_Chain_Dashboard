@@ -26,7 +26,7 @@ st.set_page_config(
 # base_url = "http://172.17.149.238/api"
 base_url = "https://viable-informally-alpaca.ngrok-free.app/api"
 # version = "NSS_1000_12_Simulation" 
-version = "lam_1000_12_v1"
+version = "simulation_exports"
 # version = "simulation_exports_10000_50"
 # version = "simulation_check"z
 
