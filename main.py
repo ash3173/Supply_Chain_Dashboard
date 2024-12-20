@@ -26,10 +26,10 @@ st.set_page_config(
 base_url = "http://172.17.149.238/api"
 # base_url = "https://viable-informally-alpaca.ngrok-free.app/api"
 # version = "NSS_1000_12_Simulation" 
-version = "simulation_exports"
+# version = "simulation_exports"
 # version = "simulation_exports_10000_50"
 # version = "simulation_check"z
-
+version = "lam_1000_12_v1"
 end_point_for_supplier = base_url
 
 getVersions = f"{base_url}/versions"
@@ -40,6 +40,58 @@ get_live_data = f"{base_url}/live/schema/{version}"
 
 data_folder = "data"
 
+
+def find_alternate_suppliers(graph, facility_id, primary_suppliers=None):
+    path = "suppliers_parts_data_unused.json"
+    with open(path,'r') as f : 
+        supplier_data = json.load(f)
+
+    if primary_suppliers is None:
+        primary_suppliers = []
+
+    # Find parts used by the facility
+    parts_used = [
+        source for source, target, edge_data in graph.in_edges(facility_id, data=True)
+        if edge_data.get("relationship_type") == "PARTSToFACILITY"
+    ]
+    # st.write(parts_used)
+
+    # Find all suppliers for these parts
+    partsToSupplier = {}
+    for supplier_id,parts in supplier_data.items():
+        for part in parts:
+            if part in parts_used:
+                if part in partsToSupplier:
+                    partsToSupplier[part].append(supplier_id)
+                else:
+                    partsToSupplier[part] = [supplier_id]
+
+    # Find Suppliers lead time and cost
+    supplierCost = {}
+    for source, target, edge_data in graph.edges(data=True):
+        if edge_data.get("relationship_type") == "SUPPLIERSToWAREHOUSE":
+            supplierCost[source] = [edge_data.get("transportation_cost"), edge_data.get("lead_time")]
+
+    # Find alternate suppliers for these parts
+    partsToAlternateSupplier = {}
+    for part_id, suppliers in partsToSupplier.items():
+        alternate_suppliers = []
+        for supplier in suppliers:
+            if supplier not in primary_suppliers and supplier in supplierCost:
+                alternate_suppliers.append({
+                    "supplier_id": supplier,
+                    "transportation_cost": supplierCost[supplier][0],
+                    "lead_time": supplierCost[supplier][1],
+                })
+        
+        # Rank alternate suppliers
+        ranked_suppliers = sorted(
+            alternate_suppliers,
+            key=lambda x: (x["transportation_cost"], x["lead_time"])
+        )
+        partsToAlternateSupplier[part_id] = ranked_suppliers
+
+    return partsToAlternateSupplier
 
 
 def check_units_available_in_warehouse(data,graph,product_id,product_id_node) :
@@ -519,6 +571,9 @@ def main():
         unsafe_allow_html=True,
     )
 
+    image_path = "Dashboard2.jpg"
+    if os.path.exists(image_path):
+        st.image(image_path, use_container_width=False, caption=None)
 
     col1 , col2 = st.columns(2,gap="large")
 
@@ -785,5 +840,43 @@ def main():
     st.text(" ")  
 
     st.divider()  
+
+    st.write("## Alternate Suppliers Query")
+    all_facility_id = []
+    for facility in data["node_values"]["FACILITY"] :
+        all_facility_id.append(facility[-1])
+
+    all_supplier_id = []
+    for supplier in data["node_values"]["SUPPLIERS"] :
+        all_supplier_id.append(supplier[-1])
+
+    col1 , col2 = st.columns(2)
+    clicked = False
+
+    with col1:
+        facility_id = st.selectbox("Select Facility", all_facility_id)
+        primary_suppliers = st.multiselect("Select Primary Suppliers", all_supplier_id)
+
+        if st.button("Find Alternate Suppliers"):
+            partsToAlternateSupplier = find_alternate_suppliers(graph, facility_id, primary_suppliers)
+            clicked = True
+
+    with col2:
+        if clicked:
+
+            st.write("### Alternate Suppliers for Parts Used by the Facility")
+            for part, suppliers in partsToAlternateSupplier.items():
+                st.write(f"### Part: {part}")
+                if suppliers:
+                    supplier_df = pd.DataFrame(suppliers)
+                    st.dataframe(supplier_df)
+                else:
+                    st.write("No alternate suppliers found for this part.")
+        
+    st.text(" ")
+    st.text(" ")
+
+    st.divider()
+
 if __name__ == "__main__":
     main()
